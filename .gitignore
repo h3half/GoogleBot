@@ -2,4 +2,5 @@ auth.json
 log.txt
 latestSearch.html
 config.json
+.vscode/launch.json
 node_modules/

@@ -1,6 +1,5 @@
 // Initialize objects
 const Discord = require("discord.js");
-const auth = require("./auth.json");
 const fs = require("fs");
 const request = require("sync-request");
 const { start } = require("repl");
@@ -13,7 +12,20 @@ var config = "";
 
 // Initialize bot
 var bot = new Discord.Client();
-bot.login(auth.token);
+
+try {
+    const auth = require("./auth.json");
+    bot.login(auth.token);
+} catch {
+    authtoken = process.env.AUTH_TOKEN;
+    bot.login(authtoken);
+}
+
+// Fires when unhandled promise rejections occur
+process.on('unhandledRejection', (error, p) => {
+  console.log('=== UNHANDLED REJECTION ===');
+  console.dir(error.stack);
+});
 
 // Fires when bot connects
 bot.on("ready", () => {

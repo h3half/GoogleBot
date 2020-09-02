@@ -5,10 +5,10 @@ const request = require("sync-request");
 const { start } = require("repl");
 const WolframAlphaAPI = require("wolfram-alpha-api");
 
-const waApi = WolframAlphaAPI("TWGU7V-U3KRHUX3VW");
 var mentionString1 = "";
 var mentionString2 = "";
 var config = "";
+var wa_key = "";
 
 // Initialize bot
 var bot = new Discord.Client();
@@ -16,10 +16,14 @@ var bot = new Discord.Client();
 try {
     const auth = require("./auth.json");
     bot.login(auth.token);
+    wa_key = auth.wa;
 } catch {
     authtoken = process.env.AUTH_TOKEN;
+    wa_key = process.env.WA_API
     bot.login(authtoken);
 }
+
+const waApi = WolframAlphaAPI(wa_key);
 
 // Fires when unhandled promise rejections occur
 process.on('unhandledRejection', (error, p) => {
@@ -394,8 +398,9 @@ function wolframCommand(args, message) {
 
     waApi.getShort(searchTerm).then((data) => {
         sendMessage(data, message);
-    }).catch( function() {
+    }).catch( function(e) {
         sendMessage("Sorry, I can't answer that", message);
+        sendMessage(`Error: ${e}`, message);
     });
 }
 

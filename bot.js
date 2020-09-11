@@ -156,6 +156,12 @@ function commandParser(content, message) {
         case "latex":
             response = "<@!646523630309605396> !" + command + " " + args.join(" ");
             break;
+        
+        case "nhc":
+        
+        case "noaa":
+            response = noaaCommand();
+            break;
 
         default:
             response = "Command \"" + command + "\" not recognized";
@@ -407,4 +413,36 @@ function wolframCommand(args, message) {
 // Sends a message to the given Discord channel
 function sendMessage(string, message) {
     message.channel.send(string);
+}
+
+// Retrieves NOAA Atlantic Ocean tropical storm map
+function noaaCommand() {
+    console.log("Retrieving NOAA ATL image");
+
+    // Retrieve the HTML
+    rawHtml = getHtml("https://www.nhc.noaa.gov/");
+
+    // Write the raw HTML to file for debugging/manual inspection
+    fs.writeFile("latestSearch.html", rawHtml, function (err) {
+        if (err) throw err;
+    });
+
+    // Only search between the "START"/"END" comments
+    startIdx = rawHtml.indexOf("<!-- START OF CONTENTS -->");
+    endIdx = rawHtml.indexOf("<!-- END OF CONTENTS -->", startIdx);
+    contentArea = rawHtml.substring(startIdx, endIdx);
+
+    // Find the <img ... > tag
+    tagStart = contentArea.indexOf("<img id=");
+    tagEnd = contentArea.indexOf(">", tagStart);
+    imgTag = contentArea.substring(tagStart, tagEnd);
+
+    // Retrieve the link from the tag
+    linkStart = imgTag.indexOf("src=") + "src=".length;
+    linkEnd = imgTag.indexOf("useMap=", linkStart);
+    link = imgTag.substring(linkStart, linkEnd);
+
+    response = "https://www.nhc.noaa.gov" + link.replace(/'/g, '')
+
+    return response;
 }

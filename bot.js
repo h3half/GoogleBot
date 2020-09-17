@@ -327,7 +327,7 @@ function configCommand(args) {
         }
     
     // Boolean parsing for connection notification and debug logging
-    } else if (args[0] == "notify_connection" || args[0] == "debug" || args[0] == "spam" || args[0] == "emojispam") {
+    } else if (args[0] == "notify_connection" || args[0] == "debug" || args[0] == "spam" || args[0] == "emojispam" || args[0] == "nhc_from_github") {
         let newValue = "";
         
         // Try to parse the given value
@@ -348,14 +348,16 @@ function configCommand(args) {
             config.spam = newValue;
         } else if (args[0] == "emojispam") {
             config.emojispam = newValue;
+        } else if (args[0] == "nhc_from_github") {
+            config.nhc_from_github = newValue;
         }
 
         message = `Changed config item '${args[0]}' to value '${newValue}'`;
 
     // Print current config values
-    } else if (args[0] == "read") {
+    } else if (args[0] == "read" || args[0] == undefined) {
         console.log(config);
-        message = `\`\`\`Current config values\ntext_results: ${config.text_results}\nimage_results: ${config.image_results}\nnotify_connection: ${config.notify_connection}\nspam: ${config.spam}\nemojispam: ${config.emojispam}\ndebug: ${config.debug}\`\`\``;
+        message = `\`\`\`Current config values\ntext_results: ${config.text_results}\nimage_results: ${config.image_results}\nnotify_connection: ${config.notify_connection}\nspam: ${config.spam}\nnhc_from_github: ${config.nhc_from_github}\nemojispam: ${config.emojispam}\ndebug: ${config.debug}\`\`\``;
     } else {
         return `Config item '${args[0]}' not recognized`;
     }
@@ -417,8 +419,15 @@ function sendMessage(string, message) {
 
 // Retrieves NOAA Atlantic Ocean tropical storm map
 function noaaCommand() {
-    console.log("Retrieving NOAA ATL image");
 
+    // If the option is enabled, the link is always the same
+    if (config.nhc_from_github) {
+        console.log("Retrieving NOAA ATL image from nhc-cones github project");
+        return "https://protuhj.github.io/nhc-cones/atl_latest.png"
+    }
+
+    console.log("Retrieving NOAA ATL image");
+    
     // Retrieve the HTML
     rawHtml = getHtml("https://www.nhc.noaa.gov/");
 

@@ -23,8 +23,6 @@ try {
     bot.login(authtoken);
 }
 
-const waApi = WolframAlphaAPI(wa_key);
-
 // Fires when unhandled promise rejections occur
 process.on('unhandledRejection', (error, p) => {
   console.log('=== UNHANDLED REJECTION ===');
@@ -96,8 +94,26 @@ bot.on("message", message => {
             message.react("🤖");
         } else if (content.toLowerCase().search("reee") != -1) {
             message.react("👿");
+        } else if (content.toLowerCase().search("george russell") != -1) {
+            message.react("❤");
+        } else if (content.toLowerCase().search("elon") != -1 || content.toLowerCase().search("musk") != -1 || content.toLowerCase().search("elomg") != -1) {
+            if (config.shortHate) {
+                message.react("🤬");
+            } else {
+                message.react("🇫")
+                    .then(() => message.react("🇺"))
+                    .then(() => message.react("🇨"))
+                    .then(() => message.react("🇰"))
+                    .then(() => message.react("🇪"))
+                    .then(() => message.react("🇱"))
+                    .then(() => message.react("🇴"))
+                    .then(() => message.react("🇳"))
+                    .catch(() => sendMessage("angry reaction error"));
+            }
+        } else if (message.author.id == "181967094185852929" && content.toLowerCase().search("store") != -1 ) {
+            message.react("🛒");
         }
-
+ 
     // Log non-mention messages for debugging
     } else if (config.debug) {
         console.log(`Message '${content}' does not start with mentionString`);
@@ -150,7 +166,7 @@ function commandParser(content, message) {
         case "w":
 
         case "wa":
-            wolframCommand(args, message);
+            response = wolframCommand(args);
             break;
         
         case "latex":
@@ -163,6 +179,10 @@ function commandParser(content, message) {
             response = noaaCommand();
             break;
 
+        case "meme":
+            response = memeCommand();
+            break;
+
         default:
             response = "Command \"" + command + "\" not recognized";
     }
@@ -170,7 +190,7 @@ function commandParser(content, message) {
     // Send response
     if (message != "") {
         sendMessage(response, message);
-        console.log("Sent message: " + message);
+        console.log("Sent message: " + response);
     }
 
     return;
@@ -327,7 +347,7 @@ function configCommand(args) {
         }
     
     // Boolean parsing for connection notification and debug logging
-    } else if (args[0] == "notify_connection" || args[0] == "debug" || args[0] == "spam" || args[0] == "emojispam" || args[0] == "nhc_from_github") {
+    } else if (args[0] == "notify_connection" || args[0] == "debug" || args[0] == "spam" || args[0] == "emojispam" || args[0] == "nhc_from_github" || args[0] == "shortHate") {
         let newValue = "";
         
         // Try to parse the given value
@@ -350,6 +370,8 @@ function configCommand(args) {
             config.emojispam = newValue;
         } else if (args[0] == "nhc_from_github") {
             config.nhc_from_github = newValue;
+        } else if (args[0] == "shortHate") {
+            config.shortHate = newValue;
         }
 
         message = `Changed config item '${args[0]}' to value '${newValue}'`;
@@ -357,7 +379,7 @@ function configCommand(args) {
     // Print current config values
     } else if (args[0] == "read" || args[0] == undefined) {
         console.log(config);
-        message = `\`\`\`Current config values\ntext_results: ${config.text_results}\nimage_results: ${config.image_results}\nnotify_connection: ${config.notify_connection}\nspam: ${config.spam}\nnhc_from_github: ${config.nhc_from_github}\nemojispam: ${config.emojispam}\ndebug: ${config.debug}\`\`\``;
+        message = `\`\`\`Current config values\ntext_results: ${config.text_results}\nimage_results: ${config.image_results}\nnotify_connection: ${config.notify_connection}\nspam: ${config.spam}\nnhc_from_github: ${config.nhc_from_github}\nemojispam: ${config.emojispam}\nmemeSubreddit: ${config.memeSubreddit}\nshortHate: ${config.shortHate}\ndebug: ${config.debug}\`\`\``;
     } else {
         return `Config item '${args[0]}' not recognized`;
     }
@@ -401,15 +423,63 @@ function randomNumber(min, max) {
 }
 
 // Sends questions to Wolfram|Alpha
-function wolframCommand(args, message) {
-    let searchTerm = args.join(" ");
+function wolframCommand(args) {
+    searchTerm = args.join(" ");
+    returnData = getHtml(`http://api.wolframalpha.com/v2/query?appid=${wa_key}&input=${searchTerm}`);
 
-    waApi.getShort(searchTerm).then((data) => {
-        sendMessage(data, message);
-    }).catch( function(e) {
-        sendMessage("Sorry, I can't answer that", message);
-        sendMessage(`Error: ${e}`, message);
-    });
+    // Printing the XML to the log helps with debugging when a new pod type is found
+    //console.log(returnData);
+
+    // Find the result
+    answerPodIdx = returnData.indexOf("<pod title='Result'");
+
+    // Try to find alternate results if there's no 'Result' pod
+    if (answerPodIdx == -1) {
+        answerPodIdx = returnData.indexOf("<pod title='Current result'");
+
+        if (answerPodIdx == -1) {
+            answerPodIdx = returnData.indexOf("<pod title='Table'");
+
+            if (answerPodIdx == -1) {
+                answerPodIdx = returnData.indexOf("<pod title='Plot'");
+
+                // More to come, I suppose
+                if (answerPodIdx == -1) {
+                    answerPodIdx = returnData.indexOf("<pod title='Plots'");
+
+                    if (answerPodIdx == -1) {
+                        return "Sorry, I don't understand your query."
+                    }
+                }
+
+                // Handle plots
+                resultStartIdx = returnData.indexOf("src='", answerPodIdx) + "src=".length;
+                resultEndIdx = returnData.indexOf("alt=", resultStartIdx);
+
+                link = returnData.substring(resultStartIdx, resultEndIdx);
+                link = link.trim();
+                link = link.replace("&amp;", "&");
+                link = link.slice(1, -1);
+
+                return link;
+            }
+        }
+    }
+
+    plaintextIdx = returnData.indexOf("<plaintext>", answerPodIdx);
+
+    if (answerPodIdx == -1 || plaintextIdx == -1) {
+        return "Sorry, I don't understand your query."
+    }
+
+    resultStartIdx = plaintextIdx + "<plaintext>".length;
+    resultEndIdx = returnData.indexOf("</plaintext", resultStartIdx);
+
+    result = returnData.substring(resultStartIdx, resultEndIdx);
+
+    result = result.replace(/&amp;/g, '&').replace(/&apos;/g, "'");
+
+    return result;
 }
 
 // Sends a message to the given Discord channel
@@ -419,7 +489,6 @@ function sendMessage(string, message) {
 
 // Retrieves NOAA Atlantic Ocean tropical storm map
 function noaaCommand() {
-
     // If the option is enabled, the link is always the same
     if (config.nhc_from_github) {
         console.log("Retrieving NOAA ATL image from nhc-cones github project");
@@ -454,4 +523,38 @@ function noaaCommand() {
     response = "https://www.nhc.noaa.gov" + link.replace(/'/g, '')
 
     return response;
+}
+
+function getNthIndex(string, substring, n) {
+    thisIdx = string.indexOf(substring);
+
+    if (n == 1) {
+        return thisIdx;
+    }
+
+    iteration = 1
+    while (thisIdx != -1) {
+        iteration = iteration + 1;
+        thisIdx = string.indexOf(substring, thisIdx + 1);
+
+        if (iteration == n) {
+            return thisidx
+        }
+    }
+}
+
+function memeCommand() {
+    redditUrl = "https://www.reddit.com/r/" + config.memeSubreddit + "/top/?t=all"
+
+    // Retrieve the HTML
+    rawHtml = getHtml(redditUrl)
+
+    // Write the raw HTML to file for debugging/manual inspection
+    fs.writeFile("latestSearch.html", rawHtml, function (err) {
+        if (err) throw err;
+    });
+
+    // Find the third instance of the <a> tag. This is the first post.
+    thirdAIdx = getNthIndex(rawHtml, "<a href=", 3);
+    return thirdAIdx
 }

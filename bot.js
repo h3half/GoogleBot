@@ -4,6 +4,7 @@ const fs = require("fs");
 const request = require("sync-request");
 const { start } = require("repl");
 const WolframAlphaAPI = require("wolfram-alpha-api");
+const schedule = require("node-schedule");
 
 var mentionString1 = "";
 var mentionString2 = "";
@@ -79,24 +80,36 @@ bot.on("message", message => {
             linkSearch(content, message);
 
         }
+    }
 
     // Bespoke, message-specific responses
-    } else if (config.spam) {
+    if (config.spam) {
         if (content == "How was your run?") {
             sendMessage("I just got back from my run", message);
         } else if (content == "69") {
             sendMessage("Nice", message);
         }
+    }
+
+    if (config.gifReactions) {
+        if (content.toLowerCase().search("popcat") != -1) {
+            sendMessage("https://media.tenor.com/images/054e7e7f6060bf2fcdb72634b926ee29/tenor.gif", message);
+        } else if (content.toLowerCase().search("parrot") != -1) {
+            sendMessage("https://media.tenor.com/images/b155ad3a6f47980607b7abcdcbf18db2/tenor.gif", message);
+        }
+    }
     
     // Responses for if a message contains specific text
-    } else if (config.emojispam) {
+    if (config.emojispam) {
         if (content.toLowerCase().search("good bot") != -1) {
             message.react("🤖");
         } else if (content.toLowerCase().search("reee") != -1) {
             message.react("👿");
         } else if (content.toLowerCase().search("george russell") != -1) {
             message.react("❤");
-        } else if (content.toLowerCase().search("elon") != -1 || content.toLowerCase().search("musk") != -1 || content.toLowerCase().search("elomg") != -1) {
+        } else if (content.toLowerCase().search("factorio") != -1) {
+            message.react("🏭");
+        } else if (content.toLowerCase().startsWith("elon") || content.toLowerCase().endsWith("elon") || content.toLowerCase().search(" elon ") != -1 || content.toLowerCase().search("elon's") != -1 || content.toLowerCase().search("elomg") != -1 || content.toLowerCase().search(" musk ") != -1 || content.toLowerCase().search("musk's") != -1 || content.toLowerCase().startsWith("musk") || content.toLowerCase().endsWith("musk")) {
             if (config.shortHate) {
                 message.react("🤬");
             } else {
@@ -113,13 +126,8 @@ bot.on("message", message => {
         } else if (message.author.id == "181967094185852929" && content.toLowerCase().search("store") != -1 ) {
             message.react("🛒");
         }
- 
-    // Log non-mention messages for debugging
-    } else if (config.debug) {
-        console.log(`Message '${content}' does not start with mentionString`);
     }
 });
-
 
 // Fires when bot disconnects
 bot.on("shardDisconnect", () => {
@@ -183,6 +191,10 @@ function commandParser(content, message) {
             response = memeCommand();
             break;
 
+        case "rss":
+            response = rssCommand(args, message.author.id);
+            break;
+
         default:
             response = "Command \"" + command + "\" not recognized";
     }
@@ -195,6 +207,45 @@ function commandParser(content, message) {
 
     return;
 }
+
+// Parses RSS files and sends alerts
+// debug notes: the #bot-testing channel id is 525521991424278529
+//              you can get a youtube channel rss by viewing the source of their channel page and control+F for "rss" to find the "rssUrl" value
+function rssReader() {
+    // load the rss subscription file and loop through the entries
+    //loopstart
+        // load list of subscribers for this entry, purge file+entry if empty
+        // download new rss file
+        // load old rss file from disk
+        // compare
+        // if different, try to parse to figure out latest thing
+        // send notification message to subscribers
+    //loopend
+}
+
+// Handles the adding or removing of RSS feed subscriptions
+function rssCommand(args, authorId) {
+    if (args[0] == "add") {
+        // load the rss subscription file
+        // check that the feed doesn't already exist in the rss subscription file
+        // if so, add the user if they're not already on there and do nothing if they're already on there. maybe alert about it idk
+        // if not, add the feed and user subscription to the subscription file and alert success
+        // if this is a brand new rss feed to follow, download a copy of the file to be the "old rss file"
+    } else if (args[0] == "remove") {
+        // load the rss subscription file
+        // find the given feed, alert if can't be found
+        // remove the user from the list of subscribed people
+        // if nobody is left, remove the feed from the subscription file
+    } else {
+        return "Cannot parse arguments. RSS command uses syntax \"rss [add|remove] [rssFeed]\""
+    }
+}
+
+// Initialize RSS reader
+//TODO: This runs every minute at the five-second mark. Once complete it should probably run every hour at like 7 minutes or something
+const rssReaderJob = schedule.scheduleJob("5 * * * * *", function(){
+    rssReader();
+});
 
 // Sends result of Google Image search for given query
 function imageSearch(content, message) {
@@ -228,7 +279,7 @@ function imageSearch(content, message) {
 
     let response = "";
     for (i = 0; i < imagesToSend; i++) {
-        let [thisResponse, responseIdx] = findLinkInHtml(rawHtml, "<img class=\"t0fcAb\"", "&amp;s");
+        let [thisResponse, responseIdx] = findLinkInHtml(rawHtml, "<img class=\"yWs4tf\"", "&amp;s"); //NOTE: Google likes to change the img class to mess with us
         rawHtml = rawHtml.substring(responseIdx);
         response += thisResponse + "\n";
     }
@@ -300,7 +351,16 @@ function findLinkInHtml(source, startString, endString) {
     try {
         return [decodeURIComponent(linkString), nextSearchIdx];
     } catch(error) {
-        return ["Cannot parse URI. Don't search for such silly nonsense.", 0];
+        if (config.debug) {
+            if (linkString.length > 1000) {
+                quoteText = "linkString is too long to display"
+            } else {
+                quoteText = linkString
+            }
+            return [`Cannot parse URI. LinkString: \`\`\`${quoteText}\`\`\``, 0]
+        } else {
+            return ["Cannot parse URI. Don't search for such silly nonsense.", 0];
+        }
     }
 }
 
@@ -347,7 +407,7 @@ function configCommand(args) {
         }
     
     // Boolean parsing for connection notification and debug logging
-    } else if (args[0] == "notify_connection" || args[0] == "debug" || args[0] == "spam" || args[0] == "emojispam" || args[0] == "nhc_from_github" || args[0] == "shortHate") {
+    } else if (args[0] == "notify_connection" || args[0] == "debug" || args[0] == "spam" || args[0] == "gifReactions" || args[0] == "emojispam" || args[0] == "nhc_from_github" || args[0] == "shortHate") {
         let newValue = "";
         
         // Try to parse the given value
@@ -366,6 +426,8 @@ function configCommand(args) {
             config.debug = newValue;
         } else if (args[0] == "spam") {
             config.spam = newValue;
+        } else if (args[0] == "gifReactions") {
+            config.gifReactions = newValue;
         } else if (args[0] == "emojispam") {
             config.emojispam = newValue;
         } else if (args[0] == "nhc_from_github") {
@@ -379,7 +441,7 @@ function configCommand(args) {
     // Print current config values
     } else if (args[0] == "read" || args[0] == undefined) {
         console.log(config);
-        message = `\`\`\`Current config values\ntext_results: ${config.text_results}\nimage_results: ${config.image_results}\nnotify_connection: ${config.notify_connection}\nspam: ${config.spam}\nnhc_from_github: ${config.nhc_from_github}\nemojispam: ${config.emojispam}\nmemeSubreddit: ${config.memeSubreddit}\nshortHate: ${config.shortHate}\ndebug: ${config.debug}\`\`\``;
+        message = `\`\`\`Current config values\ntext_results: ${config.text_results}\nimage_results: ${config.image_results}\nnotify_connection: ${config.notify_connection}\nspam: ${config.spam}\ngifReactions: ${config.gifReactions}\nnhc_from_github: ${config.nhc_from_github}\nemojispam: ${config.emojispam}\nmemeSubreddit: ${config.memeSubreddit}\nshortHate: ${config.shortHate}\ndebug: ${config.debug}\`\`\``;
     } else {
         return `Config item '${args[0]}' not recognized`;
     }

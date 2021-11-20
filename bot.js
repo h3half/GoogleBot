@@ -57,6 +57,11 @@ bot.on("message", message => {
 
     // Sanitize inputs
     let content = message.content.replace("’", "");
+
+    // Early return if the message was sent by GoogleBot itself
+    if (message.author == bot.user) {
+        return
+    }
     
     // If the message starts with either the real bot mention string or the nicknam bot mention string
     if (mention == bot.user) {
@@ -110,7 +115,7 @@ bot.on("message", message => {
         } else if (content.toLowerCase().search("factorio") != -1) {
             message.react("🏭");
         } else if (content.toLowerCase().startsWith("elon") || content.toLowerCase().endsWith("elon") || content.toLowerCase().search(" elon ") != -1 || content.toLowerCase().search("elon's") != -1 || content.toLowerCase().search("elomg") != -1 || content.toLowerCase().search(" musk ") != -1 || content.toLowerCase().search("musk's") != -1 || content.toLowerCase().startsWith("musk") || content.toLowerCase().endsWith("musk")) {
-            if (config.shortHate) {
+            if (config.elonHate) {
                 message.react("🤬");
             } else {
                 message.react("🇫")
@@ -125,6 +130,14 @@ bot.on("message", message => {
             }
         } else if (message.author.id == "181967094185852929" && content.toLowerCase().search("store") != -1 ) {
             message.react("🛒");
+        }
+    }
+
+    if (config.sarcasmText) {
+        [sarcastic, text] = hasSarcasm(content)
+
+        if (sarcastic) {
+            sendMessage(sarcasmText(text), message);
         }
     }
 });
@@ -407,7 +420,7 @@ function configCommand(args) {
         }
     
     // Boolean parsing for connection notification and debug logging
-    } else if (args[0] == "notify_connection" || args[0] == "debug" || args[0] == "spam" || args[0] == "gifReactions" || args[0] == "emojispam" || args[0] == "nhc_from_github" || args[0] == "shortHate") {
+    } else if (args[0] == "notify_connection" || args[0] == "debug" || args[0] == "spam" || args[0] == "gifReactions" || args[0] == "emojispam" || args[0] == "nhc_from_github" || args[0] == "elonHate" || args[0] == "sarcasmText") {
         let newValue = "";
         
         // Try to parse the given value
@@ -432,8 +445,10 @@ function configCommand(args) {
             config.emojispam = newValue;
         } else if (args[0] == "nhc_from_github") {
             config.nhc_from_github = newValue;
-        } else if (args[0] == "shortHate") {
-            config.shortHate = newValue;
+        } else if (args[0] == "elonHate") {
+            config.elonHate = newValue;
+        } else if (args[0] == "sarcasmText") {
+            config.sarcasmText = newValue
         }
 
         message = `Changed config item '${args[0]}' to value '${newValue}'`;
@@ -441,7 +456,7 @@ function configCommand(args) {
     // Print current config values
     } else if (args[0] == "read" || args[0] == undefined) {
         console.log(config);
-        message = `\`\`\`Current config values\ntext_results: ${config.text_results}\nimage_results: ${config.image_results}\nnotify_connection: ${config.notify_connection}\nspam: ${config.spam}\ngifReactions: ${config.gifReactions}\nnhc_from_github: ${config.nhc_from_github}\nemojispam: ${config.emojispam}\nmemeSubreddit: ${config.memeSubreddit}\nshortHate: ${config.shortHate}\ndebug: ${config.debug}\`\`\``;
+        message = `\`\`\`Current config values\ntext_results: ${config.text_results}\nimage_results: ${config.image_results}\nnotify_connection: ${config.notify_connection}\nspam: ${config.spam}\ngifReactions: ${config.gifReactions}\nnhc_from_github: ${config.nhc_from_github}\nemojispam: ${config.emojispam}\nmemeSubreddit: ${config.memeSubreddit}\nelonHate: ${config.elonHate}\nsarcasmText: ${config.sarcasmText}\ndebug: ${config.debug}\`\`\``;
     } else {
         return `Config item '${args[0]}' not recognized`;
     }
@@ -619,4 +634,27 @@ function memeCommand() {
     // Find the third instance of the <a> tag. This is the first post.
     thirdAIdx = getNthIndex(rawHtml, "<a href=", 3);
     return thirdAIdx
+}
+
+function hasSarcasm(text) {
+    trimmed = text.toLowerCase().trim();
+
+    if (trimmed.endsWith("/s") || trimmed.endsWith("\\s")) {
+        return [true, trimmed.substring(0, trimmed.length-2)]
+    }
+
+    return [false, text]
+}
+
+function sarcasmText(text) {
+    var returnString = "";
+    for (let i = 0; i < text.length; i++) {
+        if (i % 2 == 0) {
+            returnString = returnString.concat(text.charAt(i).toUpperCase());
+        } else {
+            returnString = returnString.concat(text.charAt(i).toLowerCase());
+        }
+    }
+
+    return returnString
 }

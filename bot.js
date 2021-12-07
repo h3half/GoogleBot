@@ -5,6 +5,7 @@ const request = require("sync-request");
 const { start } = require("repl");
 const WolframAlphaAPI = require("wolfram-alpha-api");
 const schedule = require("node-schedule");
+let Parser = require("rss-parser")
 
 var mentionString1 = "";
 var mentionString2 = "";
@@ -225,6 +226,18 @@ function commandParser(content, message) {
 // debug notes: the #bot-testing channel id is 525521991424278529
 //              you can get a youtube channel rss by viewing the source of their channel page and control+F for "rss" to find the "rssUrl" value
 function rssReader() {
+    let parser = new Parser();
+
+    (async () => {
+
+        let feed = await parser.parseURL('https://dolphin-emu.org/blog/feeds/');
+        console.log(feed.title);
+      
+        feed.items.forEach(item => {
+          console.log(item.title + ':' + item.link)
+        });
+      
+      })();
     // load the rss subscription file and loop through the entries
     //loopstart
         // load list of subscribers for this entry, purge file+entry if empty
@@ -239,6 +252,7 @@ function rssReader() {
 // Handles the adding or removing of RSS feed subscriptions
 function rssCommand(args, authorId) {
     if (args[0] == "add") {
+        rssReader()
         // load the rss subscription file
         // check that the feed doesn't already exist in the rss subscription file
         // if so, add the user if they're not already on there and do nothing if they're already on there. maybe alert about it idk
@@ -256,9 +270,9 @@ function rssCommand(args, authorId) {
 
 // Initialize RSS reader
 //TODO: This runs every minute at the five-second mark. Once complete it should probably run every hour at like 7 minutes or something
-const rssReaderJob = schedule.scheduleJob("5 * * * * *", function(){
-    rssReader();
-});
+//const rssReaderJob = schedule.scheduleJob("5 * * * * *", function(){
+//    rssReader();
+//});
 
 // Sends result of Google Image search for given query
 function imageSearch(content, message) {
@@ -462,7 +476,7 @@ function configCommand(args) {
     }
 
     // Write the updated config file
-    fs.writeFileSync('config.json', JSON.stringify(config));
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 4));
 
     return message;
 }

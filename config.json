@@ -1,0 +1,15 @@
+{
+    "text_results": 3,
+    "image_results": 3,
+    "notify_connection": true,
+    "metered_wolfram": false,
+    "nhc_from_github": true,
+    "spam": true,
+    "gifReactions": true,
+    "emojispam": true,
+    "memeSubreddit": "dankmemes",
+    "shortHate": false,
+    "sarcasmText": true,
+    "debug": true,
+    "elonHate": true
+}

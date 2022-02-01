@@ -5,7 +5,6 @@ const request = require("sync-request");
 const { start } = require("repl");
 const WolframAlphaAPI = require("wolfram-alpha-api");
 const schedule = require("node-schedule");
-let Parser = require("rss-parser")
 
 var mentionString1 = "";
 var mentionString2 = "";
@@ -45,6 +44,10 @@ bot.on("ready", () => {
     let rawConfig = fs.readFileSync("config.json");
     config = JSON.parse(rawConfig);
 
+    // Load message count file
+    let rawMessageCount = fs.readFileSync("messageCount.json");
+    messageCount = JSON.parse(rawMessageCount);
+
     // Optionally notify server of connection
     if (config.notify_connection) {
         bot.channels.cache.get('525521991424278529').send('Connected')
@@ -62,6 +65,24 @@ bot.on("message", message => {
     // Early return if the message was sent by GoogleBot itself
     if (message.author == bot.user) {
         return
+    }
+
+    // Count messages sent by human users
+    if (message.author.id == "136882320799039488" ) { // Henry
+        messageCount.henry = parseInt(messageCount.henry) + 1;
+        fs.writeFileSync('messageCount.json', JSON.stringify(messageCount, null, 4));
+
+    } else if (message.author.id == "523387286126067723") { // Eliot
+        messageCount.eliot = parseInt(messageCount.eliot) + 1;
+        fs.writeFileSync('messageCount.json', JSON.stringify(messageCount, null, 4));
+
+    } else if (message.author.id == "181967094185852929") { // Duncan
+        messageCount.duncan = parseInt(messageCount.duncan) + 1;
+        fs.writeFileSync('messageCount.json', JSON.stringify(messageCount, null, 4));
+
+    } else if (message.author.id == "523520159671910410") { // Logan
+        messageCount.logan = parseInt(messageCount.logan) + 1;
+        fs.writeFileSync('messageCount.json', JSON.stringify(messageCount, null, 4));
     }
     
     // If the message starts with either the real bot mention string or the nicknam bot mention string
@@ -116,7 +137,7 @@ bot.on("message", message => {
         } else if (content.toLowerCase().search("factorio") != -1) {
             message.react("🏭");
         } else if (content.toLowerCase().startsWith("elon") || content.toLowerCase().endsWith("elon") || content.toLowerCase().search(" elon ") != -1 || content.toLowerCase().search("elon's") != -1 || content.toLowerCase().search("elomg") != -1 || content.toLowerCase().search(" musk ") != -1 || content.toLowerCase().search("musk's") != -1 || content.toLowerCase().startsWith("musk") || content.toLowerCase().endsWith("musk")) {
-            if (config.elonHate) {
+            if (config.shortElonHate) {
                 message.react("🤬");
             } else {
                 message.react("🇫")
@@ -204,9 +225,9 @@ function commandParser(content, message) {
         case "meme":
             response = memeCommand();
             break;
-
-        case "rss":
-            response = rssCommand(args, message.author.id);
+        
+        case "count":
+            response = countCommand();
             break;
 
         default:
@@ -221,58 +242,6 @@ function commandParser(content, message) {
 
     return;
 }
-
-// Parses RSS files and sends alerts
-// debug notes: the #bot-testing channel id is 525521991424278529
-//              you can get a youtube channel rss by viewing the source of their channel page and control+F for "rss" to find the "rssUrl" value
-function rssReader() {
-    let parser = new Parser();
-
-    (async () => {
-
-        let feed = await parser.parseURL('https://dolphin-emu.org/blog/feeds/');
-        console.log(feed.title);
-      
-        feed.items.forEach(item => {
-          console.log(item.title + ':' + item.link)
-        });
-      
-      })();
-    // load the rss subscription file and loop through the entries
-    //loopstart
-        // load list of subscribers for this entry, purge file+entry if empty
-        // download new rss file
-        // load old rss file from disk
-        // compare
-        // if different, try to parse to figure out latest thing
-        // send notification message to subscribers
-    //loopend
-}
-
-// Handles the adding or removing of RSS feed subscriptions
-function rssCommand(args, authorId) {
-    if (args[0] == "add") {
-        rssReader()
-        // load the rss subscription file
-        // check that the feed doesn't already exist in the rss subscription file
-        // if so, add the user if they're not already on there and do nothing if they're already on there. maybe alert about it idk
-        // if not, add the feed and user subscription to the subscription file and alert success
-        // if this is a brand new rss feed to follow, download a copy of the file to be the "old rss file"
-    } else if (args[0] == "remove") {
-        // load the rss subscription file
-        // find the given feed, alert if can't be found
-        // remove the user from the list of subscribed people
-        // if nobody is left, remove the feed from the subscription file
-    } else {
-        return "Cannot parse arguments. RSS command uses syntax \"rss [add|remove] [rssFeed]\""
-    }
-}
-
-// Initialize RSS reader
-//TODO: This runs every minute at the five-second mark. Once complete it should probably run every hour at like 7 minutes or something
-//const rssReaderJob = schedule.scheduleJob("5 * * * * *", function(){
-//    rssReader();
-//});
 
 // Sends result of Google Image search for given query
 function imageSearch(content, message) {
@@ -434,7 +403,7 @@ function configCommand(args) {
         }
     
     // Boolean parsing for connection notification and debug logging
-    } else if (args[0] == "notify_connection" || args[0] == "debug" || args[0] == "spam" || args[0] == "gifReactions" || args[0] == "emojispam" || args[0] == "nhc_from_github" || args[0] == "elonHate" || args[0] == "sarcasmText") {
+    } else if (args[0] == "notify_connection" || args[0] == "debug" || args[0] == "spam" || args[0] == "gifReactions" || args[0] == "emojispam" || args[0] == "nhc_from_github" || args[0] == "shortElonHate" || args[0] == "sarcasmText") {
         let newValue = "";
         
         // Try to parse the given value
@@ -459,8 +428,8 @@ function configCommand(args) {
             config.emojispam = newValue;
         } else if (args[0] == "nhc_from_github") {
             config.nhc_from_github = newValue;
-        } else if (args[0] == "elonHate") {
-            config.elonHate = newValue;
+        } else if (args[0] == "shortElonHate") {
+            config.shortElonHate = newValue;
         } else if (args[0] == "sarcasmText") {
             config.sarcasmText = newValue
         }
@@ -470,7 +439,7 @@ function configCommand(args) {
     // Print current config values
     } else if (args[0] == "read" || args[0] == undefined) {
         console.log(config);
-        message = `\`\`\`Current config values\ntext_results: ${config.text_results}\nimage_results: ${config.image_results}\nnotify_connection: ${config.notify_connection}\nspam: ${config.spam}\ngifReactions: ${config.gifReactions}\nnhc_from_github: ${config.nhc_from_github}\nemojispam: ${config.emojispam}\nmemeSubreddit: ${config.memeSubreddit}\nelonHate: ${config.elonHate}\nsarcasmText: ${config.sarcasmText}\ndebug: ${config.debug}\`\`\``;
+        message = `\`\`\`Current config values\ntext_results: ${config.text_results}\nimage_results: ${config.image_results}\nnotify_connection: ${config.notify_connection}\nspam: ${config.spam}\ngifReactions: ${config.gifReactions}\nnhc_from_github: ${config.nhc_from_github}\nemojispam: ${config.emojispam}\nmemeSubreddit: ${config.memeSubreddit}\nshortElonHate: ${config.shortElonHate}\nsarcasmText: ${config.sarcasmText}\ndebug: ${config.debug}\`\`\``;
     } else {
         return `Config item '${args[0]}' not recognized`;
     }
@@ -576,6 +545,25 @@ function wolframCommand(args) {
 // Sends a message to the given Discord channel
 function sendMessage(string, message) {
     message.channel.send(string);
+}
+
+// Displays how many messages each user has sent
+function countCommand() {
+    var henry = messageCount.henry;
+    var eliot = messageCount.eliot;
+    var duncan = messageCount.duncan;
+    var logan = messageCount.logan;
+    var totalMessages = henry + eliot + duncan + logan;
+
+    henry = henry.toLocaleString("en-us");
+    eliot = eliot.toLocaleString("en-us");
+    duncan = duncan.toLocaleString("en-us");
+    logan = logan.toLocaleString("en-us");
+    totalMessages = totalMessages.toLocaleString("en-us");
+
+    response = `\`\`\`Current message counts\n\nHenry: ${henry}\nEliot: ${eliot}\nDuncan: ${duncan}\nLogan: ${logan}\n\nTotal: ${totalMessages}\`\`\``;
+
+    return response;
 }
 
 // Retrieves NOAA Atlantic Ocean tropical storm map

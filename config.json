@@ -11,5 +11,5 @@
     "shortHate": false,
     "sarcasmText": true,
     "debug": true,
-    "elonHate": true
+    "shortElonHate": false
 }

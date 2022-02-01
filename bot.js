@@ -305,7 +305,7 @@ function linkSearch (content, message) {
 
     let response = "";
     for (i = 0; i < config.text_results; i++) {
-        var [thisResponse, responseIdx] = findLinkInHtml(rawHtml, "<div class=\"kCrYT\"><a href=", "&amp;sa=U&amp;");
+        var [thisResponse, responseIdx] = findLinkInHtml(rawHtml, "<div class=\"egMi0 kCrYT\"><a href=", "&amp;sa=U&amp;");
         rawHtml = rawHtml.substring(responseIdx);
         response += thisResponse + "\n";
     }
@@ -349,11 +349,11 @@ function findLinkInHtml(source, startString, endString) {
     } catch(error) {
         if (config.debug) {
             if (linkString.length > 1000) {
-                quoteText = "linkString is too long to display"
+                quoteText = `linkString is too long to display. startString: ${startString}    endString: ${endString}`;
             } else {
                 quoteText = linkString
             }
-            return [`Cannot parse URI. LinkString: \`\`\`${quoteText}\`\`\``, 0]
+            return [`Cannot parse URI. LinkString: \`\`\`${quoteText}\`\`\``, 0];
         } else {
             return ["Cannot parse URI. Don't search for such silly nonsense.", 0];
         }

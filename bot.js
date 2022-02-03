@@ -67,22 +67,32 @@ bot.on("message", message => {
         return
     }
 
+    let writeFile = false;
+
     // Count messages sent by human users
     if (message.author.id == "136882320799039488" ) { // Henry
         messageCount.henry = parseInt(messageCount.henry) + 1;
-        fs.writeFileSync('messageCount.json', JSON.stringify(messageCount, null, 4));
+        writeFile = true;
 
     } else if (message.author.id == "523387286126067723") { // Eliot
         messageCount.eliot = parseInt(messageCount.eliot) + 1;
-        fs.writeFileSync('messageCount.json', JSON.stringify(messageCount, null, 4));
+        writeFile = true;
 
     } else if (message.author.id == "181967094185852929") { // Duncan
         messageCount.duncan = parseInt(messageCount.duncan) + 1;
-        fs.writeFileSync('messageCount.json', JSON.stringify(messageCount, null, 4));
+        writeFile = true;
 
     } else if (message.author.id == "523520159671910410") { // Logan
         messageCount.logan = parseInt(messageCount.logan) + 1;
-        fs.writeFileSync('messageCount.json', JSON.stringify(messageCount, null, 4));
+        writeFile = true;
+    }
+
+    if (writeFile == true) {
+        try {
+            fs.writeFileSync('messageCount.json', JSON.stringify(messageCount, null, 4));
+        } catch (e) {
+            console.log(`Writing message count file failed with error:\n${e}`);
+        }
     }
     
     // If the message starts with either the real bot mention string or the nicknam bot mention string

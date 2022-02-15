@@ -660,6 +660,7 @@ function hasSarcasm(text) {
 
 function sarcasmText(text) {
     var returnString = "";
+    
     for (let i = 0; i < text.length; i++) {
         if (i % 2 == 0) {
             returnString = returnString.concat(text.charAt(i).toUpperCase());

@@ -196,14 +196,6 @@ function commandParser(content, message) {
 
     // Call command-specific functions
     switch(command) {
-        case "version":
-            response = versionCommand(args);
-            break;
-
-        case "changelog":
-            response = changelogCommand(args);
-            break;
-
         case "config":
             response = configCommand(args);
             break;
@@ -211,13 +203,8 @@ function commandParser(content, message) {
         case "roll":
             response = rollCommand(args);
             break;
-
-        case "help":
-            response = helpCommand(args);
-            break;
         
         case "w":
-
         case "wa":
             response = wolframCommand(args);
             break;
@@ -227,7 +214,6 @@ function commandParser(content, message) {
             break;
         
         case "nhc":
-        
         case "noaa":
             response = noaaCommand();
             break;
@@ -370,14 +356,6 @@ function findLinkInHtml(source, startString, endString) {
     }
 }
 
-function versionCommand(args) {
-
-}
-
-function changelogCommand(args) {
-    
-}
-
 function configCommand(args) {
     let message = "";
 
@@ -482,10 +460,6 @@ function rollCommand(args) {
     }
 
     return message;
-}
-
-function helpCommand(args) {
-    
 }
 
 function randomNumber(min, max) {

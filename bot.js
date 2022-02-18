@@ -2,12 +2,9 @@
 const Discord = require("discord.js");
 const fs = require("fs");
 const request = require("sync-request");
-const { start } = require("repl");
 const WolframAlphaAPI = require("wolfram-alpha-api");
 const schedule = require("node-schedule");
 
-var mentionString1 = "";
-var mentionString2 = "";
 var config = "";
 var wa_key = "";
 
@@ -199,6 +196,10 @@ function commandParser(content, message) {
         case "config":
             response = configCommand(args);
             break;
+        
+        case "reaction":
+            response = reactionCommand(args);
+            break;
 
         case "roll":
             response = rollCommand(args);
@@ -216,10 +217,6 @@ function commandParser(content, message) {
         case "nhc":
         case "noaa":
             response = noaaCommand();
-            break;
-
-        case "meme":
-            response = memeCommand();
             break;
         
         case "count":
@@ -359,11 +356,6 @@ function findLinkInHtml(source, startString, endString) {
 function configCommand(args) {
     let message = "";
 
-    if (args[0] == "-?") {
-        //TODO: Call the helpCommand() function {message = helpCommand(args)}
-        // return helpCommand(blah blah blah)
-    }
-
     // Integer parsing for text and image results
     if (args[0] == "text_results" || args[0] == "image_results") {
         // Try to parse the given amount
@@ -438,26 +430,25 @@ function configCommand(args) {
     return message;
 }
 
+function reactionCommand(args) {
+    
+}
+
 function rollCommand(args) {
     let message = "";
 
-    if (args[0] == "-?") {
-        //TODO: Call the helpCommand() function {message = helpCommand(args)}
+    var diceSides = 6;
+    var potentialSides = parseInt(args[0]);
 
-    } else {
-        var diceSides = 6;
-        var potentialSides = parseInt(args[0]);
+    if (!isNaN(potentialSides)) {
+        diceSides = potentialSides;
 
-        if (!isNaN(potentialSides)) {
-            diceSides = potentialSides;
-
-            if (diceSides < 2) {
-                diceSides = 2;
-            }
+        if (diceSides < 2) {
+            diceSides = 2;
         }
-
-        message = "You rolled a " + randomNumber(1, diceSides) + " on a " + diceSides + "-sided die.";
     }
+
+    message = "You rolled a " + randomNumber(1, diceSides) + " on a " + diceSides + "-sided die.";
 
     return message;
 }
@@ -586,40 +577,6 @@ function noaaCommand() {
     response = "https://www.nhc.noaa.gov" + link.replace(/'/g, '')
 
     return response;
-}
-
-function getNthIndex(string, substring, n) {
-    thisIdx = string.indexOf(substring);
-
-    if (n == 1) {
-        return thisIdx;
-    }
-
-    iteration = 1
-    while (thisIdx != -1) {
-        iteration = iteration + 1;
-        thisIdx = string.indexOf(substring, thisIdx + 1);
-
-        if (iteration == n) {
-            return thisidx
-        }
-    }
-}
-
-function memeCommand() {
-    redditUrl = "https://www.reddit.com/r/" + config.memeSubreddit + "/top/?t=all"
-
-    // Retrieve the HTML
-    rawHtml = getHtml(redditUrl)
-
-    // Write the raw HTML to file for debugging/manual inspection
-    fs.writeFile("latestSearch.html", rawHtml, function (err) {
-        if (err) throw err;
-    });
-
-    // Find the third instance of the <a> tag. This is the first post.
-    thirdAIdx = getNthIndex(rawHtml, "<a href=", 3);
-    return thirdAIdx
 }
 
 function hasSarcasm(text) {

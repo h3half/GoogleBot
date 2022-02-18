@@ -125,6 +125,14 @@ bot.on("message", message => {
         }
     }
 
+    //if (config.reactions) {
+        // check the reactions json file/memory object
+        // loop through each one in turn and send ONE reaction per message
+        // might involve changing case and doing other checks
+        // messages can have a (series of) discord reactions OR a single link
+        // messages can optionally @reply the original sender, maybe this should be a config toggle
+    //}
+
     if (config.gifReactions) {
         if (content.toLowerCase().search("popcat") != -1) {
             sendMessage("https://media.tenor.com/images/054e7e7f6060bf2fcdb72634b926ee29/tenor.gif", message);
@@ -431,7 +439,24 @@ function configCommand(args) {
 }
 
 function reactionCommand(args) {
+    // we want a json file that tracks keywords and how to react to those keywords
+    // reactions could be an emoji reaction or a link in text
+    // maybe an option on whether googlebot should quote the request in googlebot's reply?
+    // we'll need options for exact matches, partial matches, case matches, etc
+
+    if (args[0] == "set") {
+        // check if an entry already exists
+        // if so, update it
+        // if not, make a new one
     
+    } else if (args[0] == "remove") {
+        // check if an entry already exists
+        // if so, remove it
+        // if not, report that it doesn't exist
+
+    } else if (args[0] == "read") {
+        // display the whole json file in chat using the ``` ``` blocks
+    }
 }
 
 function rollCommand(args) {
@@ -530,13 +555,20 @@ function countCommand() {
     var logan = messageCount.logan;
     var totalMessages = henry + eliot + duncan + logan;
 
+    var serverOrigin = new Date('December 15, 2018 15:57:00');
+    var currentDate = Date.now();
+    var elapsedMilliseconds = currentDate - serverOrigin;
+    var elapsedDays = Math.floor(elapsedMilliseconds / (1000 * 60 * 60 * 24));
+    var messagesPerDay = (totalMessages / elapsedDays).toFixed(2);
+
     henry = henry.toLocaleString("en-us");
     eliot = eliot.toLocaleString("en-us");
     duncan = duncan.toLocaleString("en-us");
     logan = logan.toLocaleString("en-us");
     totalMessages = totalMessages.toLocaleString("en-us");
+    messagesPerDay = messagesPerDay.toLocaleString("en-us");
 
-    response = `\`\`\`Current message counts\n\nHenry: ${henry}\nEliot: ${eliot}\nDuncan: ${duncan}\nLogan: ${logan}\n\nTotal: ${totalMessages}\`\`\``;
+    response = `\`\`\`Current message counts\n\nHenry: ${henry}\nEliot: ${eliot}\nDuncan: ${duncan}\nLogan: ${logan}\n\nTotal: ${totalMessages}\nPer day: ${messagesPerDay}\`\`\``;
 
     return response;
 }

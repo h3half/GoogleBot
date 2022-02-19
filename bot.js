@@ -36,15 +36,15 @@ bot.on("ready", () => {
 
     // Load config
     let rawConfig = fs.readFileSync("./config/config.json");
-    config = JSON.parse(rawConfig);
+    config = JSON.parse(rawConfig.toString());
 
     // Load message count file
     let rawMessageCount = fs.readFileSync("./config/messageCount.json");
-    messageCount = JSON.parse(rawMessageCount);
+    messageCount = JSON.parse(rawMessageCount.toString());
 
     // Load reaction config file
     let rawReaction = fs.readFileSync("./config/reactions.json");
-    reactionConfig = JSON.parse(rawReaction);
+    reactionConfig = JSON.parse(rawReaction.toString());
 
     // Optionally notify server of connection
     if (config.notify_connection) {

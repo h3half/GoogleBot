@@ -5,3 +5,4 @@ latestSearch.html
 node_modules/
 messageCount.json
 reactions.json
+.idea/

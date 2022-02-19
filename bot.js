@@ -1,6 +1,6 @@
 // Initialize objects
-const Discord = require("discord.js");
 const fs = require("fs");
+const Discord = require("discord.js");
 const request = require("sync-request");
 //const WolframAlphaAPI = require("wolfram-alpha-api");
 
@@ -10,7 +10,7 @@ let reactionConfig = "";
 let wa_key = "";
 
 // Initialize bot
-let bot = new Discord.Client();
+let bot = new Discord.Client({intents: ["GUILDS", "GUILD_MESSAGES"]});
 
 try {
     const auth = require("./auth.json");
@@ -53,7 +53,7 @@ bot.on("ready", () => {
 });
 
 // Fires when a message is received
-bot.on("message", message => {
+bot.on("messageCreate", message => {
     //TODO: Actually fully sanitize down to some smaller unicode set
     let mention = message.mentions.users.first();
 

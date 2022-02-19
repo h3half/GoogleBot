@@ -2,16 +2,15 @@
 const Discord = require("discord.js");
 const fs = require("fs");
 const request = require("sync-request");
-const WolframAlphaAPI = require("wolfram-alpha-api");
-const schedule = require("node-schedule");
+//const WolframAlphaAPI = require("wolfram-alpha-api");
 
-var config = "";
-var messageCount = "";
-var reactionConfig = "";
-var wa_key = "";
+let config = "";
+let messageCount = "";
+let reactionConfig = "";
+let wa_key = "";
 
 // Initialize bot
-var bot = new Discord.Client();
+let bot = new Discord.Client();
 
 try {
     const auth = require("./auth.json");
@@ -24,17 +23,13 @@ try {
 }
 
 // Fires when unhandled promise rejections occur
-process.on('unhandledRejection', (error, p) => {
+process.on('unhandledRejection', (error) => {
   console.log('=== UNHANDLED REJECTION ===');
   console.dir(error.stack);
 });
 
 // Fires when bot connects
 bot.on("ready", () => {
-    // Set mentionStrings
-    mentionString1 = "<@!" + bot.user + ">"
-    mentionString2 = "<@" + bot.user + ">"
-
     // Record time and log connection in console
     const reconnectTime = new Date(Date.now());
     console.log(`Connected as ${bot.user.username} (id ${bot.user}) on ${reconnectTime.toUTCString()}`);
@@ -66,31 +61,31 @@ bot.on("message", message => {
     let content = message.content.replace("’", "");
 
     // Early return if the message was sent by GoogleBot itself
-    if (message.author == bot.user) {
+    if (message.author === bot.user) {
         return
     }
 
     let writeFile = false;
 
     // Count messages sent by human users
-    if (message.author.id == "136882320799039488" ) { // Henry
+    if (message.author.id === "136882320799039488" ) { // Henry
         messageCount.henry = parseInt(messageCount.henry) + 1;
         writeFile = true;
 
-    } else if (message.author.id == "523387286126067723") { // Eliot
+    } else if (message.author.id === "523387286126067723") { // Eliot
         messageCount.eliot = parseInt(messageCount.eliot) + 1;
         writeFile = true;
 
-    } else if (message.author.id == "181967094185852929") { // Duncan
+    } else if (message.author.id === "181967094185852929") { // Duncan
         messageCount.duncan = parseInt(messageCount.duncan) + 1;
         writeFile = true;
 
-    } else if (message.author.id == "523520159671910410") { // Logan
+    } else if (message.author.id === "523520159671910410") { // Logan
         messageCount.logan = parseInt(messageCount.logan) + 1;
         writeFile = true;
     }
 
-    if (writeFile == true) {
+    if (writeFile === true) {
         try {
             fs.writeFileSync('messageCount.json', JSON.stringify(messageCount, null, 4));
         } catch (e) {
@@ -98,11 +93,11 @@ bot.on("message", message => {
         }
     }
     
-    // If the message starts with either the real bot mention string or the nicknam bot mention string
-    if (mention == bot.user) {
+    // If the message starts with either the real bot mention string or the nickname bot mention string
+    if (mention === bot.user) {
         // Parse out the mentionString
-        commandString = content.substring(content.search(" ") + 1);
-        console.log(`Recieved command: ${commandString}`);
+        let commandString = content.substring(content.search(" ") + 1);
+        console.log(`Received command: ${commandString}`);
 
         // Handle commands
         if (commandString.startsWith("!")) {
@@ -123,23 +118,23 @@ bot.on("message", message => {
 
     // React to the message, per 'reactions.json'
     if (config.reactions) {
-        for (reactionId in reactionConfig) {
-            var searchTerm = reactionConfig[reactionId]["term"];
+        for (let reactionId in reactionConfig) {
+            let searchTerm = reactionConfig[reactionId]["term"];
 
             // Check user whitelist, if applicable
-            if (reactionConfig[reactionId]["whitelist"] == null || reactionConfig[reactionId]["whitelist"] == message.author.id) {
-                if (content.toLowerCase().search(searchTerm.toLowerCase()) != -1) {
-                    var reactionType = reactionConfig[reactionId]["type"];
+            if (reactionConfig[reactionId]["whitelist"] == null || reactionConfig[reactionId]["whitelist"] === message.author.id) {
+                if (content.toLowerCase().search(searchTerm.toLowerCase()) !== -1) {
+                    let reactionType = reactionConfig[reactionId]["type"];
 
-                    if (reactionType == "emoji") {
-                        listOfReactions = reactionConfig[reactionId]["reaction"].split(" ");
+                    if (reactionType === "emoji") {
+                        let listOfReactions = reactionConfig[reactionId]["reaction"].split(" ");
 
-                        if (listOfReactions.length == 1) {
+                        if (listOfReactions.length === 1) {
                             message.react(reactionConfig[reactionId]["reaction"]);
 
                         // If there are multiple emoji to send, loop through them
                         } else {
-                            for (reaction in listOfReactions) {
+                            for (let reaction in listOfReactions) {
                                 message.react(listOfReactions[reaction]);
 
                                 // Add a slight delay to ensure proper order and (hopefully) avoid being rate-limited
@@ -147,7 +142,7 @@ bot.on("message", message => {
                             }
                         }
                         
-                    } else if (reactionType == "text") {
+                    } else if (reactionType === "text") {
                         sendMessage(reactionConfig[reactionId]["reaction"], message);
                     }
                 }
@@ -174,13 +169,13 @@ bot.on("shardDisconnect", () => {
     bot.login(auth.token);
 });
 
-// Parses commands, calls appropriate command-specific functions, and sends the response
+// Parse commands, call appropriate command-specific functions, and send the response
 function commandParser(content, message) {
     // Parse command
-    var words = content.split(" ");
-    var command = words[1].substring(1);
-    var args = words.slice(2);
-    var response = "";
+    let words = content.split(" ");
+    let command = words[1].substring(1);
+    let args = words.slice(2);
+    let response;
 
     console.log("Found command '" + command + "' with args '" + args + "'");
 
@@ -221,12 +216,10 @@ function commandParser(content, message) {
     }
     
     // Send response
-    if (message != "") {
+    if (message !== "") {
         sendMessage(response, message);
         console.log("Sent message: " + response);
     }
-
-    return;
 }
 
 // Sends result of Google Image search for given query
@@ -252,7 +245,7 @@ function imageSearch(content, message) {
 
     // Retrieve the HTML
     let parsedTerm = searchTerm.replace(" ", "+");
-    rawHtml = getHtml(`http://www.google.com/search?q=${parsedTerm}&tbm=isch`);
+    let rawHtml = getHtml(`http://www.google.com/search?q=${parsedTerm}&tbm=isch`);
 
     // Write the raw HTML to file for debugging/manual inspection
     fs.writeFile("latestSearch.html", rawHtml, function (err) {
@@ -260,7 +253,7 @@ function imageSearch(content, message) {
     });
 
     let response = "";
-    for (i = 0; i < imagesToSend; i++) {
+    for (let i = 0; i < imagesToSend; i++) {
         let [thisResponse, responseIdx] = findLinkInHtml(rawHtml, "<img class=\"yWs4tf\"", "&amp;s"); //NOTE: Google likes to change the img class to mess with us
         rawHtml = rawHtml.substring(responseIdx);
         response += thisResponse + "\n";
@@ -269,8 +262,6 @@ function imageSearch(content, message) {
     // Send response
     sendMessage(response, message);
     console.log("Sent message: " + response);
-
-    return;
 }
 
 // Sends result of Google search for given query
@@ -282,7 +273,7 @@ function linkSearch (content, message) {
 
     // Retrieve the HTML
     let parsedTerm = searchTerm.replace(" ", "+");
-    rawHtml = getHtml(`http://www.google.com/search?q=${parsedTerm}`);
+    let rawHtml = getHtml(`http://www.google.com/search?q=${parsedTerm}`);
 
     // Write the raw HTML to file for debugging/manual inspection
     fs.writeFile("latestSearch.html", rawHtml, function (err) {
@@ -290,8 +281,8 @@ function linkSearch (content, message) {
     });
 
     let response = "";
-    for (i = 0; i < config.text_results; i++) {
-        var [thisResponse, responseIdx] = findLinkInHtml(rawHtml, "<div class=\"egMi0 kCrYT\"><a href=", "&amp;sa=U&amp;");
+    for (let i = 0; i < config.text_results; i++) {
+        let [thisResponse, responseIdx] = findLinkInHtml(rawHtml, "<div class=\"egMi0 kCrYT\"><a href=", "&amp;sa=U&amp;");
         rawHtml = rawHtml.substring(responseIdx);
         response += thisResponse + "\n";
     }
@@ -299,19 +290,17 @@ function linkSearch (content, message) {
     // Send response
     sendMessage(response, message);
     console.log("Sent message: " + response);
-
-    return;
 }
 
 // Retrieves raw HTML from given URL
 function getHtml(url) {
-    rawHtml = request("GET", url);
+    let rawHtml = request("GET", url);
 
     return rawHtml.getBody("utf8");
 }
 
-// Returns contents found between given start and end strings inside the source string
-function findinHtml(source, startString, endString) {
+// Returns content found between given start and end strings inside the source string
+function findInHtml(source, startString, endString) {
     // Find location of first instance of startString
     let startIndex = source.search(startString) + startString.length;
 
@@ -326,7 +315,7 @@ function findinHtml(source, startString, endString) {
 }
 
 function findLinkInHtml(source, startString, endString) {
-    let [linkString, nextSearchIdx] = findinHtml(source, startString, endString);
+    let [linkString, nextSearchIdx] = findInHtml(source, startString, endString);
 
     linkString = linkString.substring(linkString.search("http"));
 
@@ -334,6 +323,8 @@ function findLinkInHtml(source, startString, endString) {
         return [decodeURIComponent(linkString), nextSearchIdx];
     } catch(error) {
         if (config.debug) {
+            let quoteText;
+
             if (linkString.length > 1000) {
                 quoteText = `linkString is too long to display. startString: ${startString}    endString: ${endString}`;
             } else {
@@ -350,7 +341,7 @@ function configCommand(args) {
     let message = "";
 
     // Integer parsing for text and image results
-    if (args[0] == "text_results" || args[0] == "image_results") {
+    if (args[0] === "text_results" || args[0] === "image_results") {
         // Try to parse the given amount
         let potentialResults = parseInt(args[1]);
 
@@ -364,9 +355,9 @@ function configCommand(args) {
             }
 
             // Set the value
-            if (args[0] == "text_results") {
+            if (args[0] === "text_results") {
                 config.text_results = potentialResults;
-            } else if (args[0] == "image_results") {
+            } else if (args[0] === "image_results") {
                 config.image_results = potentialResults;
             }
 
@@ -376,41 +367,41 @@ function configCommand(args) {
         }
     
     // Boolean parsing for connection notification and debug logging
-    } else if (args[0] == "notify_connection" || args[0] == "debug" || args[0] == "spam" || args[0] == "gifReactions" || args[0] == "emojispam" || args[0] == "nhc_from_github" || args[0] == "shortElonHate" || args[0] == "sarcasmText") {
+    } else if (args[0] === "notify_connection" || args[0] === "debug" || args[0] === "spam" || args[0] === "gifReactions" || args[0] === "emojispam" || args[0] === "nhc_from_github" || args[0] === "shortElonHate" || args[0] === "sarcasmText") {
         let newValue = "";
         
         // Try to parse the given value
-        if (args[1] == "true") {
+        if (args[1] === "true") {
             newValue = true;
-        } else if (args[1] == "false") {
+        } else if (args[1] === "false") {
             newValue = false;
         } else {
-            return `Invlaid option ${args[1]} for config item ${args[0]}`;
+            return `Invalid option ${args[1]} for config item ${args[0]}`;
         }
 
         // Set the value
-        if (args[0] == "notify_connection") {
+        if (args[0] === "notify_connection") {
             config.notify_connection = newValue;
-        } else if (args[0] == "debug") {
+        } else if (args[0] === "debug") {
             config.debug = newValue;
-        } else if (args[0] == "spam") {
+        } else if (args[0] === "spam") {
             config.spam = newValue;
-        } else if (args[0] == "gifReactions") {
+        } else if (args[0] === "gifReactions") {
             config.gifReactions = newValue;
-        } else if (args[0] == "emojispam") {
+        } else if (args[0] === "emojispam") {
             config.emojispam = newValue;
-        } else if (args[0] == "nhc_from_github") {
+        } else if (args[0] === "nhc_from_github") {
             config.nhc_from_github = newValue;
-        } else if (args[0] == "shortElonHate") {
+        } else if (args[0] === "shortElonHate") {
             config.shortElonHate = newValue;
-        } else if (args[0] == "sarcasmText") {
+        } else if (args[0] === "sarcasmText") {
             config.sarcasmText = newValue
         }
 
         message = `Changed config item '${args[0]}' to value '${newValue}'`;
 
     // Print current config values
-    } else if (args[0] == "read" || args[0] == undefined) {
+    } else if (args[0] === "read" || args[0] === undefined) {
         console.log(config);
         message = `\`\`\`Current config values\ntext_results: ${config.text_results}\nimage_results: ${config.image_results}\nnotify_connection: ${config.notify_connection}\nspam: ${config.spam}\ngifReactions: ${config.gifReactions}\nnhc_from_github: ${config.nhc_from_github}\nemojispam: ${config.emojispam}\nmemeSubreddit: ${config.memeSubreddit}\nshortElonHate: ${config.shortElonHate}\nsarcasmText: ${config.sarcasmText}\ndebug: ${config.debug}\`\`\``;
     } else {
@@ -424,11 +415,11 @@ function configCommand(args) {
 }
 
 function reactionCommand(args) {
-    returnMessage = "";
+    let returnMessage = "";
 
-    if (args[0] == "-h" || args[0] == "help" || args[0] == "--help") {
+    if (args[0] === "-h" || args[0] === "help" || args[0] === "--help") {
         // TODO: Make this better
-        helpText =  "```Manages GoogleBot reactions."
+        let helpText =  "```Manages GoogleBot reactions."
         helpText += "\n\nBasic usage:"
         helpText += "\nView existing reactions: @Google !reaction"
         helpText += "\nAdd new reaction: @Google !reaction set new <term to react to>"
@@ -437,28 +428,28 @@ function reactionCommand(args) {
         helpText += "\n\nProperties:"
         helpText += "\nid: The ID of the reaction."
         helpText += "\nterm: The search term to react to."
-        helpText += "\ntype: Either 'emoji' or 'text' - controlls whether GoogleBot reacts via a Discord Reaction (emoji) or with a new message (text)"
-        helpText += "\nreaction: The emoji to react with or the text to send, depending on 'type'. Can include links, and many links will automaticlaly preview."
+        helpText += "\ntype: Either 'emoji' or 'text' - controls whether GoogleBot reacts via a Discord Reaction (emoji) or with a new message (text)"
+        helpText += "\nreaction: The emoji to react with or the text to send, depending on 'type'. Can include links, and many links will automatically preview."
         helpText += "\nwhitelist: Whitelist of users to react to for this reaction. If 'null' then all users are reacted to."
         helpText += "```"
         return helpText
         
     // Create or updates reaction to a given term
-    } else if (args[0] == "set") {
+    } else if (args[0] === "set") {
         // Make a new entry
-        if (args[1] == "new") {
-            var term = args.slice(2).join(" ");
+        if (args[1] === "new") {
+            let term = args.slice(2).join(" ");
 
             // Check if the term is already used by an existing reaction
-            for (var id in reactionConfig) {
-                if (term == reactionConfig[id]["term"]) {
+            for (let id in reactionConfig) {
+                if (term === reactionConfig[id]["term"]) {
                     return `The term \`${term}\` is already in use by reaction ID \`${reactionConfig[id]["id"]}\``
                 }
             }
 
-            newName = Date.now();
+            let newName = Date.now();
 
-            var newReactionObj = {
+            let newReactionObj = {
                 id: null, // tracker ID, and the name of the object
                 term: null, // search term to react to
                 type: null, // "emoji" or "link"
@@ -477,13 +468,13 @@ function reactionCommand(args) {
         // Update existing entry
         } else {
             // Retrieve update information from args
-            var entryToUpdate = args[1];
-            var valueToUpdate = args[2];
-            var newValue = args.slice(3).join(" ");
+            let entryToUpdate = args[1];
+            let valueToUpdate = args[2];
+            let newValue = args.slice(3).join(" ");
 
             // Quick sanity check for the type
-            if (valueToUpdate == "type" && newValue != "emoji" && newValue != "text") {
-                return `Erorr: \`type\` only accepts the following values: \`emoji\`, \`text\``
+            if (valueToUpdate === "type" && newValue !== "emoji" && newValue !== "text") {
+                return `Error: \`type\` only accepts the following values: \`emoji\`, \`text\``
             }
 
             // Update object values
@@ -497,13 +488,13 @@ function reactionCommand(args) {
         }
     
     // Remove an existing reaction
-    } else if (args[0] == "remove") {
-        var id = args[1];
+    } else if (args[0] === "remove") {
+        let id = args[1];
 
         // Loop through existing reactions, looking for one with matching ID
-        var foundMatch = false;
-        for (var reaction in reactionConfig) {
-            if (String(reaction) == String(id)) {
+        let foundMatch = false;
+        for (let reaction in reactionConfig) {
+            if (String(reaction) === String(id)) {
                 // Remove such an entry if one exists
                 foundMatch = true;
                 delete reactionConfig[reaction];
@@ -511,7 +502,7 @@ function reactionCommand(args) {
             }
         }
 
-        if (foundMatch == false) {
+        if (foundMatch === false) {
             return `Error: Could not find matching entry for ID \`${id}\`. Nothing was removed.`
         }
 
@@ -527,10 +518,10 @@ function reactionCommand(args) {
 }
 
 function rollCommand(args) {
-    let message = "";
+    let message;
 
-    var diceSides = 6;
-    var potentialSides = parseInt(args[0]);
+    let diceSides = 6;
+    let potentialSides = parseInt(args[0]);
 
     if (!isNaN(potentialSides)) {
         diceSides = potentialSides;
@@ -551,39 +542,39 @@ function randomNumber(min, max) {
 
 // Sends questions to Wolfram|Alpha
 function wolframCommand(args) {
-    searchTerm = args.join(" ");
-    returnData = getHtml(`http://api.wolframalpha.com/v2/query?appid=${wa_key}&input=${searchTerm}`);
+    let searchTerm = args.join(" ");
+    let returnData = getHtml(`http://api.wolframalpha.com/v2/query?appid=${wa_key}&input=${searchTerm}`);
 
     // Printing the XML to the log helps with debugging when a new pod type is found
     //console.log(returnData);
 
     // Find the result
-    answerPodIdx = returnData.indexOf("<pod title='Result'");
+    let answerPodIdx = returnData.indexOf("<pod title='Result'");
 
     // Try to find alternate results if there's no 'Result' pod
-    if (answerPodIdx == -1) {
+    if (answerPodIdx === -1) {
         answerPodIdx = returnData.indexOf("<pod title='Current result'");
 
-        if (answerPodIdx == -1) {
+        if (answerPodIdx === -1) {
             answerPodIdx = returnData.indexOf("<pod title='Table'");
 
-            if (answerPodIdx == -1) {
+            if (answerPodIdx === -1) {
                 answerPodIdx = returnData.indexOf("<pod title='Plot'");
 
                 // More to come, I suppose
-                if (answerPodIdx == -1) {
+                if (answerPodIdx === -1) {
                     answerPodIdx = returnData.indexOf("<pod title='Plots'");
 
-                    if (answerPodIdx == -1) {
+                    if (answerPodIdx === -1) {
                         return "Sorry, I don't understand your query."
                     }
                 }
 
                 // Handle plots
-                resultStartIdx = returnData.indexOf("src='", answerPodIdx) + "src=".length;
-                resultEndIdx = returnData.indexOf("alt=", resultStartIdx);
+                let resultStartIdx = returnData.indexOf("src='", answerPodIdx) + "src=".length;
+                let resultEndIdx = returnData.indexOf("alt=", resultStartIdx);
 
-                link = returnData.substring(resultStartIdx, resultEndIdx);
+                let link = returnData.substring(resultStartIdx, resultEndIdx);
                 link = link.trim();
                 link = link.replace("&amp;", "&");
                 link = link.slice(1, -1);
@@ -593,16 +584,16 @@ function wolframCommand(args) {
         }
     }
 
-    plaintextIdx = returnData.indexOf("<plaintext>", answerPodIdx);
+    let plaintextIdx = returnData.indexOf("<plaintext>", answerPodIdx);
 
-    if (answerPodIdx == -1 || plaintextIdx == -1) {
+    if (answerPodIdx === -1 || plaintextIdx === -1) {
         return "Sorry, I don't understand your query."
     }
 
-    resultStartIdx = plaintextIdx + "<plaintext>".length;
-    resultEndIdx = returnData.indexOf("</plaintext", resultStartIdx);
+    let resultStartIdx = plaintextIdx + "<plaintext>".length;
+    let resultEndIdx = returnData.indexOf("</plaintext", resultStartIdx);
 
-    result = returnData.substring(resultStartIdx, resultEndIdx);
+    let result = returnData.substring(resultStartIdx, resultEndIdx);
 
     result = result.replace(/&amp;/g, '&').replace(/&apos;/g, "'");
 
@@ -616,17 +607,17 @@ function sendMessage(string, message) {
 
 // Displays how many messages each user has sent
 function countCommand() {
-    var henry = messageCount.henry;
-    var eliot = messageCount.eliot;
-    var duncan = messageCount.duncan;
-    var logan = messageCount.logan;
-    var totalMessages = henry + eliot + duncan + logan;
+    let henry = messageCount.henry;
+    let eliot = messageCount.eliot;
+    let duncan = messageCount.duncan;
+    let logan = messageCount.logan;
+    let totalMessages = henry + eliot + duncan + logan;
 
-    var serverOrigin = new Date('December 15, 2018 15:57:00');
-    var currentDate = Date.now();
-    var elapsedMilliseconds = currentDate - serverOrigin;
-    var elapsedDays = Math.floor(elapsedMilliseconds / (1000 * 60 * 60 * 24));
-    var messagesPerDay = (totalMessages / elapsedDays).toFixed(2);
+    let serverOrigin = new Date('December 15, 2018 15:57:00');
+    let currentDate = Date.now();
+    let elapsedMilliseconds = currentDate - serverOrigin;
+    let elapsedDays = Math.floor(elapsedMilliseconds / (1000 * 60 * 60 * 24));
+    let messagesPerDay = (totalMessages / elapsedDays).toFixed(2);
 
     henry = henry.toLocaleString("en-us");
     eliot = eliot.toLocaleString("en-us");
@@ -635,9 +626,7 @@ function countCommand() {
     totalMessages = totalMessages.toLocaleString("en-us");
     messagesPerDay = messagesPerDay.toLocaleString("en-us");
 
-    response = `\`\`\`Current message counts\n\nHenry: ${henry}\nEliot: ${eliot}\nDuncan: ${duncan}\nLogan: ${logan}\n\nTotal: ${totalMessages}\nPer day: ${messagesPerDay}\`\`\``;
-
-    return response;
+    return `\`\`\`Current message counts\n\nHenry: ${henry}\nEliot: ${eliot}\nDuncan: ${duncan}\nLogan: ${logan}\n\nTotal: ${totalMessages}\nPer day: ${messagesPerDay}\`\`\``;
 }
 
 // Retrieves NOAA Atlantic Ocean tropical storm map
@@ -651,7 +640,7 @@ function noaaCommand() {
     console.log("Retrieving NOAA ATL image");
     
     // Retrieve the HTML
-    rawHtml = getHtml("https://www.nhc.noaa.gov/");
+    let rawHtml = getHtml("https://www.nhc.noaa.gov/");
 
     // Write the raw HTML to file for debugging/manual inspection
     fs.writeFile("latestSearch.html", rawHtml, function (err) {
@@ -659,27 +648,25 @@ function noaaCommand() {
     });
 
     // Only search between the "START"/"END" comments
-    startIdx = rawHtml.indexOf("<!-- START OF CONTENTS -->");
-    endIdx = rawHtml.indexOf("<!-- END OF CONTENTS -->", startIdx);
-    contentArea = rawHtml.substring(startIdx, endIdx);
+    let startIdx = rawHtml.indexOf("<!-- START OF CONTENTS -->");
+    let endIdx = rawHtml.indexOf("<!-- END OF CONTENTS -->", startIdx);
+    let contentArea = rawHtml.substring(startIdx, endIdx);
 
     // Find the <img ... > tag
-    tagStart = contentArea.indexOf("<img id=");
-    tagEnd = contentArea.indexOf(">", tagStart);
-    imgTag = contentArea.substring(tagStart, tagEnd);
+    let tagStart = contentArea.indexOf("<img id=");
+    let tagEnd = contentArea.indexOf(">", tagStart);
+    let imgTag = contentArea.substring(tagStart, tagEnd);
 
     // Retrieve the link from the tag
-    linkStart = imgTag.indexOf("src=") + "src=".length;
-    linkEnd = imgTag.indexOf("useMap=", linkStart);
-    link = imgTag.substring(linkStart, linkEnd);
+    let linkStart = imgTag.indexOf("src=") + "src=".length;
+    let linkEnd = imgTag.indexOf("useMap=", linkStart);
+    let link = imgTag.substring(linkStart, linkEnd);
 
-    response = "https://www.nhc.noaa.gov" + link.replace(/'/g, '')
-
-    return response;
+    return "https://www.nhc.noaa.gov" + link.replace(/'/g, '')
 }
 
 function hasSarcasm(text) {
-    trimmed = text.toLowerCase().trim();
+    let trimmed = text.toLowerCase().trim();
 
     if (trimmed.endsWith("/s") || trimmed.endsWith("\\s")) {
         return [true, trimmed.substring(0, trimmed.length-2)]
@@ -689,10 +676,10 @@ function hasSarcasm(text) {
 }
 
 function sarcasmText(text) {
-    var returnString = "";
+    let returnString = "";
     
     for (let i = 0; i < text.length; i++) {
-        if (i % 2 == 0) {
+        if (i % 2 === 0) {
             returnString = returnString.concat(text.charAt(i).toUpperCase());
         } else {
             returnString = returnString.concat(text.charAt(i).toLowerCase());

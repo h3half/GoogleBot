@@ -1,5 +1,5 @@
 {
-    "name": "GoogleBot",
+    "name": "googlebot",
     "version": "0.0.1",
     "description": "Now in JavaScript",
     "main": "bot.js",

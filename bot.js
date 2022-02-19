@@ -6,6 +6,8 @@ const WolframAlphaAPI = require("wolfram-alpha-api");
 const schedule = require("node-schedule");
 
 var config = "";
+var messageCount = "";
+var reactionConfig = "";
 var wa_key = "";
 
 // Initialize bot
@@ -44,6 +46,10 @@ bot.on("ready", () => {
     // Load message count file
     let rawMessageCount = fs.readFileSync("messageCount.json");
     messageCount = JSON.parse(rawMessageCount);
+
+    // Load reaction config file
+    let rawReaction = fs.readFileSync("reactions.json");
+    reactionConfig = JSON.parse(rawReaction);
 
     // Optionally notify server of connection
     if (config.notify_connection) {
@@ -112,61 +118,40 @@ bot.on("message", message => {
         } else {
             console.log("Link searching: " + content);
             linkSearch(content, message);
-
         }
     }
 
-    // Bespoke, message-specific responses
-    if (config.spam) {
-        if (content == "How was your run?") {
-            sendMessage("I just got back from my run", message);
-        } else if (content == "69") {
-            sendMessage("Nice", message);
-        }
-    }
+    // React to the message, per 'reactions.json'
+    if (config.reactions) {
+        for (reactionId in reactionConfig) {
+            var searchTerm = reactionConfig[reactionId]["term"];
 
-    //if (config.reactions) {
-        // check the reactions json file/memory object
-        // loop through each one in turn and send ONE reaction per message
-        // might involve changing case and doing other checks
-        // messages can have a (series of) discord reactions OR a single link
-        // messages can optionally @reply the original sender, maybe this should be a config toggle
-    //}
+            // Check user whitelist, if applicable
+            if (reactionConfig[reactionId]["whitelist"] == null || reactionConfig[reactionId]["whitelist"] == message.author.id) {
+                if (content.toLowerCase().search(searchTerm.toLowerCase()) != -1) {
+                    var reactionType = reactionConfig[reactionId]["type"];
 
-    if (config.gifReactions) {
-        if (content.toLowerCase().search("popcat") != -1) {
-            sendMessage("https://media.tenor.com/images/054e7e7f6060bf2fcdb72634b926ee29/tenor.gif", message);
-        } else if (content.toLowerCase().search("parrot") != -1) {
-            sendMessage("https://media.tenor.com/images/b155ad3a6f47980607b7abcdcbf18db2/tenor.gif", message);
-        }
-    }
-    
-    // Responses for if a message contains specific text
-    if (config.emojispam) {
-        if (content.toLowerCase().search("good bot") != -1) {
-            message.react("🤖");
-        } else if (content.toLowerCase().search("reee") != -1) {
-            message.react("👿");
-        } else if (content.toLowerCase().search("george russell") != -1) {
-            message.react("❤");
-        } else if (content.toLowerCase().search("factorio") != -1) {
-            message.react("🏭");
-        } else if (content.toLowerCase().startsWith("elon") || content.toLowerCase().endsWith("elon") || content.toLowerCase().search(" elon ") != -1 || content.toLowerCase().search("elon's") != -1 || content.toLowerCase().search("elomg") != -1 || content.toLowerCase().search(" musk ") != -1 || content.toLowerCase().search("musk's") != -1 || content.toLowerCase().startsWith("musk") || content.toLowerCase().endsWith("musk")) {
-            if (config.shortElonHate) {
-                message.react("🤬");
-            } else {
-                message.react("🇫")
-                    .then(() => message.react("🇺"))
-                    .then(() => message.react("🇨"))
-                    .then(() => message.react("🇰"))
-                    .then(() => message.react("🇪"))
-                    .then(() => message.react("🇱"))
-                    .then(() => message.react("🇴"))
-                    .then(() => message.react("🇳"))
-                    .catch(() => sendMessage("angry reaction error"));
+                    if (reactionType == "emoji") {
+                        listOfReactions = reactionConfig[reactionId]["reaction"].split(" ");
+
+                        if (listOfReactions.length == 1) {
+                            message.react(reactionConfig[reactionId]["reaction"]);
+
+                        // If there are multiple emoji to send, loop through them
+                        } else {
+                            for (reaction in listOfReactions) {
+                                message.react(listOfReactions[reaction]);
+
+                                // Add a slight delay to ensure proper order and (hopefully) avoid being rate-limited
+                                new Promise(r => setTimeout(r, 500));
+                            }
+                        }
+                        
+                    } else if (reactionType == "text") {
+                        sendMessage(reactionConfig[reactionId]["reaction"], message);
+                    }
+                }
             }
-        } else if (message.author.id == "181967094185852929" && content.toLowerCase().search("store") != -1 ) {
-            message.react("🛒");
         }
     }
 
@@ -439,24 +424,106 @@ function configCommand(args) {
 }
 
 function reactionCommand(args) {
-    // we want a json file that tracks keywords and how to react to those keywords
-    // reactions could be an emoji reaction or a link in text
-    // maybe an option on whether googlebot should quote the request in googlebot's reply?
-    // we'll need options for exact matches, partial matches, case matches, etc
+    returnMessage = "";
 
-    if (args[0] == "set") {
-        // check if an entry already exists
-        // if so, update it
-        // if not, make a new one
+    if (args[0] == "-h" || args[0] == "help" || args[0] == "--help") {
+        // TODO: Make this better
+        helpText =  "```Manages GoogleBot reactions."
+        helpText += "\n\nBasic usage:"
+        helpText += "\nView existing reactions: @Google !reaction"
+        helpText += "\nAdd new reaction: @Google !reaction set new <term to react to>"
+        helpText += "\nEdit existing reaction: @Google !reaction set <reaction ID> <property to change> <new value>"
+        helpText += "\nRemove existing reaction: @Google !reaction remove <reaction ID>"
+        helpText += "\n\nProperties:"
+        helpText += "\nid: The ID of the reaction."
+        helpText += "\nterm: The search term to react to."
+        helpText += "\ntype: Either 'emoji' or 'text' - controlls whether GoogleBot reacts via a Discord Reaction (emoji) or with a new message (text)"
+        helpText += "\nreaction: The emoji to react with or the text to send, depending on 'type'. Can include links, and many links will automaticlaly preview."
+        helpText += "\nwhitelist: Whitelist of users to react to for this reaction. If 'null' then all users are reacted to."
+        helpText += "```"
+        return helpText
+        
+    // Create or updates reaction to a given term
+    } else if (args[0] == "set") {
+        // Make a new entry
+        if (args[1] == "new") {
+            var term = args.slice(2).join(" ");
+
+            // Check if the term is already used by an existing reaction
+            for (var id in reactionConfig) {
+                if (term == reactionConfig[id]["term"]) {
+                    return `The term \`${term}\` is already in use by reaction ID \`${reactionConfig[id]["id"]}\``
+                }
+            }
+
+            newName = Date.now();
+
+            var newReactionObj = {
+                id: null, // tracker ID, and the name of the object
+                term: null, // search term to react to
+                type: null, // "emoji" or "link"
+                reaction: null, // the emoji(s) or link to send
+                whitelist: null // user ID whitelist to activate this reaction on; if null then reaction is always active
+            };
+
+            newReactionObj["id"] = newName;
+            newReactionObj["term"] = term;
+
+            // Create a new JSON object using current ECMAScript timestamp
+            reactionConfig[newName] = newReactionObj;
+
+            returnMessage = `Created new reaction for term \`${term}\` with ID \`${newName}\``;
+        
+        // Update existing entry
+        } else {
+            // Retrieve update information from args
+            var entryToUpdate = args[1];
+            var valueToUpdate = args[2];
+            var newValue = args.slice(3).join(" ");
+
+            // Quick sanity check for the type
+            if (valueToUpdate == "type" && newValue != "emoji" && newValue != "text") {
+                return `Erorr: \`type\` only accepts the following values: \`emoji\`, \`text\``
+            }
+
+            // Update object values
+            try {
+                reactionConfig[entryToUpdate][valueToUpdate] = newValue;
+            } catch {
+                return `Error: Could not update \`${entryToUpdate}.${valueToUpdate}\` to value \`${newValue}\``
+            }
+
+            returnMessage = `Updated id \`${entryToUpdate}.${valueToUpdate}\` to value \`${newValue}\``;
+        }
     
+    // Remove an existing reaction
     } else if (args[0] == "remove") {
-        // check if an entry already exists
-        // if so, remove it
-        // if not, report that it doesn't exist
+        var id = args[1];
 
-    } else if (args[0] == "read") {
-        // display the whole json file in chat using the ``` ``` blocks
+        // Loop through existing reactions, looking for one with matching ID
+        var foundMatch = false;
+        for (var reaction in reactionConfig) {
+            if (String(reaction) == String(id)) {
+                // Remove such an entry if one exists
+                foundMatch = true;
+                delete reactionConfig[reaction];
+                returnMessage = `Removed entry with ID \`${id}\`.`
+            }
+        }
+
+        if (foundMatch == false) {
+            return `Error: Could not find matching entry for ID \`${id}\`. Nothing was removed.`
+        }
+
+    // Display the entirety of the config
+    } else {
+        return "```" + JSON.stringify(reactionConfig, null, 4) + "```"
     }
+
+    // Save the updated reaction config to file
+    fs.writeFileSync('reactions.json', JSON.stringify(reactionConfig, null, 4));
+
+    return returnMessage;
 }
 
 function rollCommand(args) {

@@ -4,12 +4,8 @@
     "notify_connection": true,
     "metered_wolfram": false,
     "nhc_from_github": true,
-    "spam": true,
-    "gifReactions": true,
-    "emojispam": true,
+    "reactions": true,
     "memeSubreddit": "dankmemes",
-    "shortHate": false,
     "sarcasmText": true,
-    "debug": true,
-    "shortElonHate": false
+    "debug": true
 }

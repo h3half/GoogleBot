@@ -13,13 +13,7 @@ let config = {
     "sarcasmText": false
 };
 
-let messageCount = {
-    "henry": 0,
-    "eliot": 0,
-    "duncan": 0,
-    "logan": 0
-};
-
+let messageCount = {};
 let reactionConfig = {};
 let wa_key = "";
 
@@ -83,32 +77,18 @@ bot.on("messageCreate", message => {
         return
     }
 
-    let writeFile = false;
+    // Count messages sent by users tracked in 'messageCount.json'
+    for (let userId in messageCount["counts"]) {
+        if (message.author.id === userId) {
+            messageCount["counts"][userId] = parseInt(messageCount["counts"][userId]) + 1;
 
-    // Count messages sent by human users
-    //TODO: Don't hardcode the names here; loop through the count config properly
-    if (message.author.id === "136882320799039488" ) { // Henry
-        messageCount.henry = parseInt(messageCount.henry) + 1;
-        writeFile = true;
+            try {
+                fs.writeFileSync('./config/messageCount.json', JSON.stringify(messageCount, null, 4));
+            } catch (e) {
+                log(`Writing message count file failed with error:\n${e}`);
+            }
 
-    } else if (message.author.id === "523387286126067723") { // Eliot
-        messageCount.eliot = parseInt(messageCount.eliot) + 1;
-        writeFile = true;
-
-    } else if (message.author.id === "181967094185852929") { // Duncan
-        messageCount.duncan = parseInt(messageCount.duncan) + 1;
-        writeFile = true;
-
-    } else if (message.author.id === "523520159671910410") { // Logan
-        messageCount.logan = parseInt(messageCount.logan) + 1;
-        writeFile = true;
-    }
-
-    if (writeFile === true) {
-        try {
-            fs.writeFileSync('./config/messageCount.json', JSON.stringify(messageCount, null, 4));
-        } catch (e) {
-            log(`Writing message count file failed with error:\n${e}`);
+            break;
         }
     }
 
@@ -557,11 +537,13 @@ function sendMessage(string, message) {
 
 // Displays how many messages each user has sent
 function countCommand() {
-    let henry = messageCount.henry;
-    let eliot = messageCount.eliot;
-    let duncan = messageCount.duncan;
-    let logan = messageCount.logan;
-    let totalMessages = henry + eliot + duncan + logan;
+    let counts = messageCount["counts"];
+
+    // Count total messages sent
+    let totalMessages = 0;
+    for (let count in counts) {
+        totalMessages += parseInt(counts[count]);
+    }
 
     let serverOrigin = new Date('December 15, 2018 15:57:00');
     let currentDate = Date.now();
@@ -569,13 +551,15 @@ function countCommand() {
     let elapsedDays = Math.floor(elapsedMilliseconds / (1000 * 60 * 60 * 24));
     let messagesPerDay = (totalMessages / elapsedDays).toFixed(2);
 
-    henry = henry.toLocaleString("en-us");
-    eliot = eliot.toLocaleString("en-us");
-    duncan = duncan.toLocaleString("en-us");
-    logan = logan.toLocaleString("en-us");
-    totalMessages = totalMessages.toLocaleString("en-us");
+    let readout = "Current message counts\n";
+    for (let count in counts) {
+        readout += `\n${messageCount["aliases"][count]}: ${parseInt(counts[count]).toLocaleString("en-us")}`
+    }
 
-    return `\`\`\`Current message counts\n\nHenry: ${henry}\nEliot: ${eliot}\nDuncan: ${duncan}\nLogan: ${logan}\n\nTotal: ${totalMessages}\nPer day: ${messagesPerDay}\`\`\``;
+    readout += `\n\nTotal: ${totalMessages.toLocaleString("en-us")}`
+    readout += `\nPer day: ${messagesPerDay}`
+
+    return "```" + readout + "```";
 }
 
 // Retrieves NOAA Atlantic Ocean tropical storm map

@@ -252,7 +252,7 @@ function imageSearch(content, message) {
 
     // Retrieve the HTML
     let parsedTerm = encodeurl(searchTerm);
-    let rawHtml = getHtml(`http://www.google.com/search?q=${parsedTerm}&tbm=isch`);
+    let rawHtml = getHtml(`https://www.google.com/search?q=${parsedTerm}&tbm=isch`);
 
     // Write the raw HTML to file for debugging/manual inspection
     fs.writeFile("./logs/latest_image_search.html", rawHtml, function (err) {
@@ -280,7 +280,7 @@ function linkSearch (content, message) {
 
     // Retrieve the HTML
     let parsedTerm = encodeurl(searchTerm);
-    let rawHtml = getHtml(`http://www.google.com/search?q=${parsedTerm}`);
+    let rawHtml = getHtml(`https://www.google.com/search?q=${parsedTerm}`);
 
     // Write the raw HTML to file for debugging/manual inspection
     fs.writeFile("./logs/latest_link_search.html", rawHtml, function (err) {
@@ -519,7 +519,7 @@ function wolframCommand(args) {
     if (args[0] === "image") {
         console.log(`Searching Wolfram Simple API for ${args.slice(1).join(" ")}`);
         let searchTerm = encodeurl(args.slice(1).join(" ")).replace("+", "%2B");
-        return `http://api.wolframalpha.com/v1/simple?appid=${wa_key}&i=${searchTerm}`
+        return `https://api.wolframalpha.com/v1/simple?appid=${wa_key}&i=${searchTerm}`
     }
 
     // Default to the Short Answers API
@@ -527,7 +527,7 @@ function wolframCommand(args) {
     let searchTerm = encodeurl(args.join(" ")).replace("+", "%2B");
 
     try {
-        let response = getHtml(`http://api.wolframalpha.com/v1/result?appid=${wa_key}&i=${searchTerm}`);
+        let response = getHtml(`https://api.wolframalpha.com/v1/result?appid=${wa_key}&i=${searchTerm}`);
         console.log(`Received response: ${response}`);
         return "`" + response + "`";
 

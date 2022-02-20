@@ -354,77 +354,47 @@ function findLinkInHtml(source, startString, endString) {
 }
 
 function configCommand(args) {
-    let message = "";
+    let message;
 
-    // Integer parsing for text and image results
-    if (args[0] === "text_results" || args[0] === "image_results") {
-        // Try to parse the given amount
-        let potentialResults = parseInt(args[1]);
-
-        // Assign the value if it was valid
-        if (!isNaN(potentialResults)) {
-            // Clamp the parsed amount if necessary
-            if (potentialResults > 10) {
-                potentialResults = 10;
-            } else if (potentialResults < 1) {
-                potentialResults = 1;
-            }
-
-            // Set the value
-            if (args[0] === "text_results") {
-                config.text_results = potentialResults;
-            } else if (args[0] === "image_results") {
-                config.image_results = potentialResults;
-            }
-
-            message = `Changed config item '${args[0]}' to value '${potentialResults}'`;
-        } else {
-            return `Cannot parse '${args[1]}' for config item '${args[0]}'`;
-        }
-
-        // Boolean parsing for connection notification and debug logging
-    } else if (args[0] === "notify_connection" || args[0] === "debug" || args[0] === "spam" || args[0] === "gifReactions" || args[0] === "emojispam" || args[0] === "nhc_from_github" || args[0] === "shortElonHate" || args[0] === "sarcasmText") {
-        let newValue = "";
-
-        // Try to parse the given value
-        if (args[1] === "true") {
-            newValue = true;
-        } else if (args[1] === "false") {
-            newValue = false;
-        } else {
-            return `Invalid option ${args[1]} for config item ${args[0]}`;
-        }
-
-        // Set the value
-        if (args[0] === "notify_connection") {
-            config.notify_connection = newValue;
-        } else if (args[0] === "debug") {
-            config.debug = newValue;
-        } else if (args[0] === "spam") {
-            config.spam = newValue;
-        } else if (args[0] === "gifReactions") {
-            config.gifReactions = newValue;
-        } else if (args[0] === "emojispam") {
-            config.emojispam = newValue;
-        } else if (args[0] === "nhc_from_github") {
-            config.nhc_from_github = newValue;
-        } else if (args[0] === "shortElonHate") {
-            config.shortElonHate = newValue;
-        } else if (args[0] === "sarcasmText") {
-            config.sarcasmText = newValue
-        }
-
-        message = `Changed config item '${args[0]}' to value '${newValue}'`;
-
-        // Print current config values
-    } else if (args[0] === "read" || args[0] === undefined) {
-        console.log(config);
-        message = `\`\`\`Current config values\ntext_results: ${config.text_results}\nimage_results: ${config.image_results}\nnotify_connection: ${config.notify_connection}\nspam: ${config.spam}\ngifReactions: ${config.gifReactions}\nnhc_from_github: ${config.nhc_from_github}\nemojispam: ${config.emojispam}\nmemeSubreddit: ${config.memeSubreddit}\nshortElonHate: ${config.shortElonHate}\nsarcasmText: ${config.sarcasmText}\ndebug: ${config.debug}\`\`\``;
-    } else {
-        return `Config item '${args[0]}' not recognized`;
+    // Print current config if no arguments
+    if (args.length === 0) {
+        return `\`\`\`${JSON.stringify(config, null, 4)}\`\`\``
     }
 
-    // Write the updated config file
+    // Parse values from args
+    let fieldToChange = args[0];
+    let newValue = args[1];
+
+    // Check validity of config change for search results
+    let parsedNewValue;
+
+    if (fieldToChange === "text_results" || fieldToChange === "image_results") {
+        parsedNewValue = parseInt(newValue);
+
+        if (isNaN(parsedNewValue) || parsedNewValue < 1 || parsedNewValue > 10) {
+            return `Cannot parse ${parsedNewValue} as a number of search return results.`
+        }
+
+    // Other than those two, all other config values are boolean
+    } else {
+        if (newValue.toLowerCase() === "true") {
+            parsedNewValue = true;
+        } else if (newValue.toLowerCase() === "false") {
+            parsedNewValue = false;
+        } else {
+            return `Cannot parse ${newValue} as a boolean.`
+        }
+    }
+
+    // Update config object
+    try {
+        config[fieldToChange] = parsedNewValue;
+        message = `Changed config item '${fieldToChange}' to value '${parsedNewValue}'`;
+    } catch {
+        return `Error: Could not change config item '${fieldToChange}' to value '${parsedNewValue}'`
+    }
+
+    // Save new config to file
     fs.writeFileSync('./config/config.json', JSON.stringify(config, null, 4));
 
     return message;

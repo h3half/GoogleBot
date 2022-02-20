@@ -561,7 +561,6 @@ function countCommand() {
     duncan = duncan.toLocaleString("en-us");
     logan = logan.toLocaleString("en-us");
     totalMessages = totalMessages.toLocaleString("en-us");
-    messagesPerDay = messagesPerDay.toLocaleString("en-us");
 
     return `\`\`\`Current message counts\n\nHenry: ${henry}\nEliot: ${eliot}\nDuncan: ${duncan}\nLogan: ${logan}\n\nTotal: ${totalMessages}\nPer day: ${messagesPerDay}\`\`\``;
 }

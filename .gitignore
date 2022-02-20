@@ -1,7 +1,5 @@
-auth.json
-logs/
-.vscode/launch.json
-node_modules/
-messageCount.json
-reactions.json
 .idea/
+.vscode/
+node_modules/
+logs/
+config/

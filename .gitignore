@@ -1,6 +1,5 @@
 auth.json
-log.txt
-latestSearch.html
+logs/
 .vscode/launch.json
 node_modules/
 messageCount.json

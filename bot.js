@@ -265,7 +265,7 @@ function imageSearch(content, message) {
     let rawHtml = getHtml(`http://www.google.com/search?q=${parsedTerm}&tbm=isch`);
 
     // Write the raw HTML to file for debugging/manual inspection
-    fs.writeFile("./logs/latestSearch.html", rawHtml, function (err) {
+    fs.writeFile("./logs/latest_image_search.html", rawHtml, function (err) {
         if (err) throw err;
     });
 
@@ -293,7 +293,7 @@ function linkSearch (content, message) {
     let rawHtml = getHtml(`http://www.google.com/search?q=${parsedTerm}`);
 
     // Write the raw HTML to file for debugging/manual inspection
-    fs.writeFile("./logs/latestSearch.html", rawHtml, function (err) {
+    fs.writeFile("./logs/latest_link_search.html", rawHtml, function (err) {
         if (err) throw err;
     });
 
@@ -631,7 +631,7 @@ function noaaCommand() {
     let rawHtml = getHtml("https://www.nhc.noaa.gov/");
 
     // Write the raw HTML to file for debugging/manual inspection
-    fs.writeFile("./logs/latestSearch.html", rawHtml, function (err) {
+    fs.writeFile("./logs/latest_noaa_image.html", rawHtml, function (err) {
         if (err) throw err;
     });
 

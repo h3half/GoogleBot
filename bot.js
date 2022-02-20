@@ -524,13 +524,13 @@ function wolframCommand(args) {
     // Use the Simple API if requested
     if (args[0] === "image") {
         console.log(`Searching Wolfram Simple API for ${args.slice(1).join(" ")}`);
-        let searchTerm = encodeurl(args.slice(1).join(" "))
+        let searchTerm = encodeurl(args.slice(1).join(" ")).replace("+", "%2B");
         return `http://api.wolframalpha.com/v1/simple?appid=${wa_key}&i=${searchTerm}`
     }
 
     // Default to the Short Answers API
     console.log(`Searching Wolfram Short Answers API for ${args.join(" ")}`);
-    let searchTerm = encodeurl(args.join(" "))
+    let searchTerm = encodeurl(args.join(" ")).replace("+", "%2B");
 
     try {
         let response = getHtml(`http://api.wolframalpha.com/v1/result?appid=${wa_key}&i=${searchTerm}`);

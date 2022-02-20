@@ -1,3 +1,4 @@
+// NPM imports
 const fs = require("fs");
 const Discord = require("discord.js");
 const request = require("sync-request");
@@ -12,7 +13,6 @@ let config = {
     "reactions": false,
     "sarcasmText": false
 };
-
 let messageCount = {};
 let reactionConfig = {};
 let wa_key = "";
@@ -58,7 +58,7 @@ bot.on("ready", () => {
     fs.closeSync(fs.openSync("./logs/log.txt", "w"));
 });
 
-// Fires when a message is received
+// Fires when a message is created
 bot.on("messageCreate", message => {
     let mention = message.mentions.users.first();
 
@@ -155,7 +155,7 @@ bot.on("messageCreate", message => {
     }
 });
 
-// Save log entries to the log and to the console
+// Save log entries to both the log and the console
 function log(messageToLog) {
     console.log(messageToLog);
 
@@ -209,7 +209,7 @@ function commandParser(content, message) {
     }
 }
 
-// Sends result of Google Image search for given query
+// Finds result of Google Image search for given query
 function imageSearch(content, message) {
     log("Performing image search for message: " + content);
 
@@ -251,7 +251,7 @@ function imageSearch(content, message) {
     log("Sent message: " + response);
 }
 
-// Sends result of Google search for given query
+// Finds result of Google search for given query
 function linkSearch (content, message) {
     log("Performing link search for message: " + content);
 
@@ -320,6 +320,7 @@ function findLinkInHtml(source, startString, endString) {
     }
 }
 
+// Handles the config command
 function configCommand(args) {
     let message;
 
@@ -367,6 +368,7 @@ function configCommand(args) {
     return message;
 }
 
+// Handles the reaction command
 function reactionCommand(args) {
     let returnMessage = "";
 
@@ -470,6 +472,7 @@ function reactionCommand(args) {
     return returnMessage;
 }
 
+// Handles the roll command
 function rollCommand(args) {
     let diceSides = 6;
     let potentialSides = parseInt(args[0]);
@@ -485,11 +488,12 @@ function rollCommand(args) {
     return "You rolled a `" + randomNumber(1, diceSides) + "` on a `" + diceSides + "`-sided die.";
 }
 
+// Returns a scaled random number based on given min and max values
 function randomNumber(min, max) {
     return Math.floor(Math.random() * (max - min) + min);
 }
 
-// Sends question to Wolfram|Alpha using their Simple API (which creates images for answers)
+// Sends query to Wolfram|Alpha using either the Short Answers or Simple API
 function wolframCommand(args) {
     // Use the Simple API if requested
     if (args[0] === "image") {
@@ -513,7 +517,7 @@ function wolframCommand(args) {
     }
 }
 
-// Sends a message to the Discord channel the given message was from
+// Sends a new message to the Discord channel the given message was from
 function sendMessage(string, message) {
     message.channel.send(string);
 }
@@ -598,6 +602,7 @@ function noaaCommand() {
     return "https://www.nhc.noaa.gov" + link.replace(/'/g, '')
 }
 
+// Detects if the given text has "\s" or "/s" at the end
 function hasSarcasm(text) {
     let trimmed = text.toLowerCase().trim();
 
@@ -608,6 +613,7 @@ function hasSarcasm(text) {
     return [false, text]
 }
 
+// Alternates capitalization for the given text
 function sarcasmText(text) {
     let returnString = "";
 

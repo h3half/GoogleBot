@@ -77,20 +77,24 @@ bot.on("messageCreate", message => {
         return
     }
 
-    // Count messages sent by users tracked in 'messageCount.json'
-    for (let userId in messageCount["counts"]) {
-        if (message.author.id === userId) {
-            messageCount["counts"][userId] = parseInt(messageCount["counts"][userId]) + 1;
+    // Count messages sent by users tracked in 'messageCount.json', as long as it's not a !count command
+    try {
+        if (content.split(" ")[1].substring(1) !== "count") {
+            for (let userId in messageCount["counts"]) {
+                if (message.author.id === userId) {
+                    messageCount["counts"][userId] = parseInt(messageCount["counts"][userId]) + 1;
 
-            try {
-                fs.writeFileSync('./config/messageCount.json', JSON.stringify(messageCount, null, 4));
-            } catch (e) {
-                log(`Writing message count file failed with error:\n${e}`);
+                    try {
+                        fs.writeFileSync('./config/messageCount.json', JSON.stringify(messageCount, null, 4));
+                    } catch (e) {
+                        log(`Writing message count file failed with error:\n${e}`);
+                    }
+
+                    break;
+                }
             }
-
-            break;
         }
-    }
+    } catch { }
 
     // If the message starts with either the real bot mention string or the nickname bot mention string
     if (mention === bot.user) {
@@ -199,7 +203,7 @@ function commandParser(content, message) {
         response = noaaCommand();
 
     } else if (command === "count") {
-        response = countCommand();
+        response = countCommand(args, message);
 
     } else {
         response = "Command \"" + command + "\" not recognized";
@@ -522,7 +526,24 @@ function sendMessage(string, message) {
 }
 
 // Displays how many messages each user has sent
-function countCommand() {
+function countCommand(args, message) {
+    // Reload data from file if requested
+    if (args[0] === "reload") {
+        // Scan the counts from file and build the printout
+        messageCount = JSON.parse(fs.readFileSync("./config/messageCount.json").toString());
+        let newCounts = countCommand(" ", message);
+
+        return `Message counts reloaded from file. New message counts:\n${newCounts}`;
+    }
+
+    // Add the message requesting a count check and save to file
+    messageCount["counts"][message.author.id] = parseInt(messageCount["counts"][message.author.id]) + 1;
+    try {
+        fs.writeFileSync('./config/messageCount.json', JSON.stringify(messageCount, null, 4));
+    } catch (e) {
+        log(`Writing message count file failed with error:\n${e}`);
+    }
+
     let counts = messageCount["counts"];
 
     // Count total messages sent

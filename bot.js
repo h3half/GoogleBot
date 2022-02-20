@@ -2,7 +2,6 @@ const fs = require("fs");
 const Discord = require("discord.js");
 const request = require("sync-request");
 const encodeurl = require("encodeurl");
-//const WolframAlphaAPI = require("wolfram-alpha-api");
 
 // Initialize configuration data
 let config = {
@@ -177,15 +176,7 @@ bot.on("messageCreate", message => {
     }
 });
 
-// // Fires when bot disconnects
-// bot.on("shardDisconnect", () => {
-//     const disconnectTime = new Date(Date.now());
-//     console.log(` `);
-//     console.log(`Disconnect time: ${disconnectTime.toUTCString()}`);
-//     console.log(` `);
-//
-//     bot.login(auth.token);
-// });
+//TODO: Make a log() function that does console.log() and also saves to the log file
 
 // Parse commands, call appropriate command-specific functions, and send the response
 function commandParser(content, message) {
@@ -406,7 +397,7 @@ function reactionCommand(args) {
     let returnMessage = "";
 
     if (args[0] === "-h" || args[0] === "help" || args[0] === "--help") {
-        //TODO: Make this better
+        //TODO: Re-implement old old method of handling help files
         let helpText =  "```Manages GoogleBot reactions."
         helpText += "\n\nBasic usage:"
         helpText += "\nView existing reactions: @Google !reaction"

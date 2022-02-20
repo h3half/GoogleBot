@@ -4,9 +4,25 @@ const Discord = require("discord.js");
 const request = require("sync-request");
 //const WolframAlphaAPI = require("wolfram-alpha-api");
 
-let config = "";
-let messageCount = "";
-let reactionConfig = "";
+// Initialize configuration data
+let config = {
+    "text_results": null,
+    "image_results": null,
+    "notify_connection": null,
+    "metered_wolfram": null,
+    "nhc_from_github": null,
+    "reactions": null,
+    "sarcasmText": null,
+    "debug": null
+};
+
+let messageCount = {
+    "henry": null,
+    "eliot": null,
+    "duncan": null,
+    "logan": null
+};
+let reactionConfig = {};
 let wa_key = "";
 
 // Initialize bot

@@ -39,7 +39,7 @@ try {
 
 // Fires when unhandled promise rejections occur
 process.on('unhandledRejection', (error) => {
-    console.log('=== UNHANDLED REJECTION ===');
+    log('=== UNHANDLED REJECTION ===');
     console.dir(error.stack);
 });
 
@@ -47,7 +47,7 @@ process.on('unhandledRejection', (error) => {
 bot.on("ready", () => {
     // Record time and log connection in console
     const reconnectTime = new Date(Date.now());
-    console.log(`Connected as ${bot.user.username} (id ${bot.user}) on ${reconnectTime.toUTCString()}`);
+    log(`Connected as ${bot.user.username} (id ${bot.user}) on ${reconnectTime.toUTCString()}`);
 
     // Load config
     let rawConfig = fs.readFileSync("./config/config.json");
@@ -65,6 +65,10 @@ bot.on("ready", () => {
     if (config.notify_connection) {
         bot.channels.cache.get('525521991424278529').send('Connected')
     }
+
+    // Back up log file and make a new blank one
+    fs.renameSync("./logs/log.txt", "./logs/log_old.txt");
+    fs.closeSync(fs.openSync("./logs/log.txt", "w"));
 });
 
 // Fires when a message is received
@@ -104,7 +108,7 @@ bot.on("messageCreate", message => {
         try {
             fs.writeFileSync('./config/messageCount.json', JSON.stringify(messageCount, null, 4));
         } catch (e) {
-            console.log(`Writing message count file failed with error:\n${e}`);
+            log(`Writing message count file failed with error:\n${e}`);
         }
     }
 
@@ -112,21 +116,21 @@ bot.on("messageCreate", message => {
     if (mention === bot.user) {
         // Parse out the mentionString
         let commandString = content.substring(content.search(" ") + 1);
-        console.log(`Received command: ${commandString}`);
+        log(`Received command: ${commandString}`);
 
         // Handle commands
         if (commandString.startsWith("!")) {
-            console.log("Handling command: " + content);
+            log("Handling command: " + content);
             commandParser(content, message);
 
         // Handle image searching
         } else if (commandString.startsWith("image ") || commandString.startsWith("images ") || commandString.startsWith("picture ") || commandString.startsWith("pictures ")) {
-            console.log("Image searching: " + content);
+            log("Image searching: " + content);
             imageSearch(content, message);
 
         // Handle link searching
         } else {
-            console.log("Link searching: " + content);
+            log("Link searching: " + content);
             linkSearch(content, message);
         }
     }
@@ -174,7 +178,16 @@ bot.on("messageCreate", message => {
     }
 });
 
-//TODO: Make a log() function that does console.log() and also saves to the log file
+// Save log entries to the log and to the console
+function log(messageToLog) {
+    console.log(messageToLog);
+
+    let logFile = fs.readFileSync("./logs/log.txt").toString();
+
+    logFile += `\n${messageToLog}`
+
+    fs.writeFileSync("./logs/log.txt", logFile);
+}
 
 // Parse commands, call appropriate command-specific functions, and send the response
 function commandParser(content, message) {
@@ -184,7 +197,7 @@ function commandParser(content, message) {
     let args = words.slice(2);
     let response;
 
-    console.log("Found command '" + command + "' with args '" + args + "'");
+    log("Found command '" + command + "' with args '" + args + "'");
 
     // Call command-specific functions
     switch(command) {
@@ -225,13 +238,13 @@ function commandParser(content, message) {
     // Send response
     if (message !== "") {
         sendMessage(response, message);
-        console.log("Sent message: " + response);
+        log("Sent message: " + response);
     }
 }
 
 // Sends result of Google Image search for given query
 function imageSearch(content, message) {
-    console.log("Performing image search for message: " + content);
+    log("Performing image search for message: " + content);
 
     let searchTerm = content.substring(content.search(" ") + 1);
 
@@ -248,7 +261,7 @@ function imageSearch(content, message) {
         searchTerm = searchTerm.substring(searchTerm.search(" ") + 1);
     }
 
-    console.log("Searching for images of: " + searchTerm);
+    log("Searching for images of: " + searchTerm);
 
     // Retrieve the HTML
     let parsedTerm = encodeurl(searchTerm);
@@ -268,15 +281,15 @@ function imageSearch(content, message) {
 
     // Send response
     sendMessage(response, message);
-    console.log("Sent message: " + response);
+    log("Sent message: " + response);
 }
 
 // Sends result of Google search for given query
 function linkSearch (content, message) {
-    console.log("Performing link search for message: " + content);
+    log("Performing link search for message: " + content);
 
     let searchTerm = content.substring(content.search(" ") + 1);
-    console.log("Searching for links of: " + searchTerm);
+    log("Searching for links of: " + searchTerm);
 
     // Retrieve the HTML
     let parsedTerm = encodeurl(searchTerm);
@@ -296,7 +309,7 @@ function linkSearch (content, message) {
 
     // Send response
     sendMessage(response, message);
-    console.log("Sent message: " + response);
+    log("Sent message: " + response);
 }
 
 // Retrieves raw HTML from given URL
@@ -517,18 +530,18 @@ function randomNumber(min, max) {
 function wolframCommand(args) {
     // Use the Simple API if requested
     if (args[0] === "image") {
-        console.log(`Searching Wolfram Simple API for ${args.slice(1).join(" ")}`);
+        log(`Searching Wolfram Simple API for ${args.slice(1).join(" ")}`);
         let searchTerm = encodeurl(args.slice(1).join(" ")).replace("+", "%2B");
         return `https://api.wolframalpha.com/v1/simple?appid=${wa_key}&i=${searchTerm}`
     }
 
     // Default to the Short Answers API
-    console.log(`Searching Wolfram Short Answers API for ${args.join(" ")}`);
+    log(`Searching Wolfram Short Answers API for ${args.join(" ")}`);
     let searchTerm = encodeurl(args.join(" ")).replace("+", "%2B");
 
     try {
         let response = getHtml(`https://api.wolframalpha.com/v1/result?appid=${wa_key}&i=${searchTerm}`);
-        console.log(`Received response: ${response}`);
+        log(`Received response: ${response}`);
         return "`" + response + "`";
 
     // Wolfram returns errors as HTML codes which crashes getHtml(), so we do this
@@ -569,11 +582,11 @@ function countCommand() {
 function noaaCommand() {
     // If the option is enabled, the link is always the same
     if (config.nhc_from_github) {
-        console.log("Retrieving NOAA ATL image from nhc-cones github project");
+        log("Retrieving NOAA ATL image from nhc-cones github project");
         return "https://protuhj.github.io/nhc-cones/atl_latest.png"
     }
 
-    console.log("Retrieving NOAA ATL image");
+    log("Retrieving NOAA ATL image");
 
     // Retrieve the HTML
     let rawHtml = getHtml("https://www.nhc.noaa.gov/");

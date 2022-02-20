@@ -474,8 +474,6 @@ function reactionCommand(args) {
 }
 
 function rollCommand(args) {
-    let message;
-
     let diceSides = 6;
     let potentialSides = parseInt(args[0]);
 
@@ -487,9 +485,7 @@ function rollCommand(args) {
         }
     }
 
-    message = "You rolled a " + randomNumber(1, diceSides) + " on a " + diceSides + "-sided die.";
-
-    return message;
+    return "You rolled a `" + randomNumber(1, diceSides) + "` on a `" + diceSides + "`-sided die.";
 }
 
 function randomNumber(min, max) {

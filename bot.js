@@ -175,15 +175,15 @@ bot.on("messageCreate", message => {
     }
 });
 
-// Fires when bot disconnects
-bot.on("shardDisconnect", () => {
-    const disconnectTime = new Date(Date.now());
-    console.log(` `);
-    console.log(`Disconnect time: ${disconnectTime.toUTCString()}`);
-    console.log(` `);
-
-    bot.login(auth.token);
-});
+// // Fires when bot disconnects
+// bot.on("shardDisconnect", () => {
+//     const disconnectTime = new Date(Date.now());
+//     console.log(` `);
+//     console.log(`Disconnect time: ${disconnectTime.toUTCString()}`);
+//     console.log(` `);
+//
+//     bot.login(auth.token);
+// });
 
 // Parse commands, call appropriate command-specific functions, and send the response
 function commandParser(content, message) {

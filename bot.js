@@ -1,7 +1,7 @@
-// Initialize objects
 const fs = require("fs");
 const Discord = require("discord.js");
 const request = require("sync-request");
+const encodeurl = require("encodeurl");
 //const WolframAlphaAPI = require("wolfram-alpha-api");
 
 // Initialize configuration data
@@ -71,10 +71,9 @@ bot.on("ready", () => {
 
 // Fires when a message is received
 bot.on("messageCreate", message => {
-    //TODO: Actually fully sanitize down to some smaller unicode set
     let mention = message.mentions.users.first();
 
-    // Sanitize inputs
+    // Ignore grave symbols ( ` ) since it messes with discord formatting so much
     let content = message.content.replace("’", "");
 
     // Early return if the message was sent by GoogleBot itself
@@ -262,7 +261,7 @@ function imageSearch(content, message) {
     console.log("Searching for images of: " + searchTerm);
 
     // Retrieve the HTML
-    let parsedTerm = searchTerm.replace(" ", "+");
+    let parsedTerm = encodeurl(searchTerm);
     let rawHtml = getHtml(`http://www.google.com/search?q=${parsedTerm}&tbm=isch`);
 
     // Write the raw HTML to file for debugging/manual inspection
@@ -290,7 +289,7 @@ function linkSearch (content, message) {
     console.log("Searching for links of: " + searchTerm);
 
     // Retrieve the HTML
-    let parsedTerm = searchTerm.replace(" ", "+");
+    let parsedTerm = encodeurl(searchTerm);
     let rawHtml = getHtml(`http://www.google.com/search?q=${parsedTerm}`);
 
     // Write the raw HTML to file for debugging/manual inspection

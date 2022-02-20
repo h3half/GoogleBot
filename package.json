@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "discord.js": "^13.6.0",
+    "encodeurl": "^1.0.2",
     "sync-request": "^6.1.0"
   }
 }

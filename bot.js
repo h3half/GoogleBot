@@ -32,10 +32,10 @@ let bot = new Discord.Client({intents: ["GUILDS", "GUILD_MESSAGES"]});
 try {
     const auth = require("./config/auth.json");
     bot.login(auth.token);
-    //wa_key = auth.wa;
+    wa_key = auth.wa;
 } catch {
     authtoken = process.env.AUTH_TOKEN;
-    //wa_key = process.env.WA_API
+    wa_key = process.env.WA_API
     bot.login(authtoken);
 }
 
@@ -527,68 +527,25 @@ function randomNumber(min, max) {
     return Math.floor(Math.random() * (max - min) + min);
 }
 
-// Sends questions to Wolfram|Alpha
-//TODO: Just use the W|A API
+// Sends question to Wolfram|Alpha using their Simple API (which creates images for answers)
 function wolframCommand(args) {
-    let searchTerm = args.join(" ");
-    let returnData = getHtml(`http://api.wolframalpha.com/v2/query?appid=${wa_key}&input=${searchTerm}`);
-
-    // Printing the XML to the log helps with debugging when a new pod type is found
-    //console.log(returnData);
-
-    // Find the result
-    let answerPodIdx = returnData.indexOf("<pod title='Result'");
-
-    // Try to find alternate results if there's no 'Result' pod
-    if (answerPodIdx === -1) {
-        answerPodIdx = returnData.indexOf("<pod title='Current result'");
-
-        if (answerPodIdx === -1) {
-            answerPodIdx = returnData.indexOf("<pod title='Table'");
-
-            if (answerPodIdx === -1) {
-                answerPodIdx = returnData.indexOf("<pod title='Plot'");
-
-                // More to come, I suppose
-                if (answerPodIdx === -1) {
-                    answerPodIdx = returnData.indexOf("<pod title='Plots'");
-
-                    if (answerPodIdx === -1) {
-                        return "Sorry, I don't understand your query."
-                    }
-                }
-
-                // Handle plots
-                let resultStartIdx = returnData.indexOf("src='", answerPodIdx) + "src=".length;
-                let resultEndIdx = returnData.indexOf("alt=", resultStartIdx);
-
-                let link = returnData.substring(resultStartIdx, resultEndIdx);
-                link = link.trim();
-                link = link.replace("&amp;", "&");
-                link = link.slice(1, -1);
-
-                return link;
-            }
-        }
+    if (args[0] === "image") {
+        console.log(`Searching Wolfram Simple API for ${args.slice(1).join(" ")}`);
+        let searchTerm = encodeurl(args.slice(1).join(" "))
+        return `http://api.wolframalpha.com/v1/simple?appid=${wa_key}&i=${searchTerm}`
     }
 
-    let plaintextIdx = returnData.indexOf("<plaintext>", answerPodIdx);
+    // Retrieve the Response
+    console.log(`Searching Wolfram Short Answers API for ${args.join(" ")}`);
+    let searchTerm = encodeurl(args.join(" "))
+    let response = getHtml(`http://api.wolframalpha.com/v1/result?appid=${wa_key}&i=${searchTerm}`);
 
-    if (answerPodIdx === -1 || plaintextIdx === -1) {
-        return "Sorry, I don't understand your query."
-    }
+    console.log(`Received response: ${response}`);
 
-    let resultStartIdx = plaintextIdx + "<plaintext>".length;
-    let resultEndIdx = returnData.indexOf("</plaintext", resultStartIdx);
-
-    let result = returnData.substring(resultStartIdx, resultEndIdx);
-
-    result = result.replace(/&amp;/g, '&').replace(/&apos;/g, "'");
-
-    return result;
+    return "`" + response + "`";
 }
 
-// Sends a message to the given Discord channel
+// Sends a message to the Discord channel the given message was from
 function sendMessage(string, message) {
     message.channel.send(string);
 }

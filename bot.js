@@ -29,6 +29,7 @@ let wa_key = "";
 // Initialize bot
 let bot = new Discord.Client({intents: ["GUILDS", "GUILD_MESSAGES"]});
 
+// Ingest secrets
 try {
     const auth = require("./config/auth.json");
     bot.login(auth.token);
@@ -529,20 +530,26 @@ function randomNumber(min, max) {
 
 // Sends question to Wolfram|Alpha using their Simple API (which creates images for answers)
 function wolframCommand(args) {
+    // Use the Simple API if requested
     if (args[0] === "image") {
         console.log(`Searching Wolfram Simple API for ${args.slice(1).join(" ")}`);
         let searchTerm = encodeurl(args.slice(1).join(" "))
         return `http://api.wolframalpha.com/v1/simple?appid=${wa_key}&i=${searchTerm}`
     }
 
-    // Retrieve the Response
+    // Default to the Short Answers API
     console.log(`Searching Wolfram Short Answers API for ${args.join(" ")}`);
     let searchTerm = encodeurl(args.join(" "))
-    let response = getHtml(`http://api.wolframalpha.com/v1/result?appid=${wa_key}&i=${searchTerm}`);
 
-    console.log(`Received response: ${response}`);
+    try {
+        let response = getHtml(`http://api.wolframalpha.com/v1/result?appid=${wa_key}&i=${searchTerm}`);
+        console.log(`Received response: ${response}`);
+        return "`" + response + "`";
 
-    return "`" + response + "`";
+    // Wolfram returns errors as HTML codes which crashes getHtml(), so we do this
+    } catch {
+        return "`Wolfram|Alpha did not understand your input`";
+    }
 }
 
 // Sends a message to the Discord channel the given message was from

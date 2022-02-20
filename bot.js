@@ -180,39 +180,29 @@ function commandParser(content, message) {
     log("Found command '" + command + "' with args '" + args + "'");
 
     // Call command-specific functions
-    switch(command) {
-        case "config":
-            response = configCommand(args);
-            break;
+    if (command === "config") {
+        response = configCommand(args);
 
-        case "reaction":
-            response = reactionCommand(args);
-            break;
+    } else if (command === "reaction") {
+        response = reactionCommand(args);
 
-        case "roll":
-            response = rollCommand(args);
-            break;
+    } else if (command === "roll") {
+        response = rollCommand(args);
 
-        case "w":
-        case "wa":
-            response = wolframCommand(args);
-            break;
+    } else if (command === "w" || command === "wa") {
+        response = wolframCommand(args);
 
-        case "latex":
-            response = "<@!646523630309605396> !" + command + " " + args.join(" ");
-            break;
+    } else if (command === "latex") {
+        response = "<@!646523630309605396> !" + command + " " + args.join(" ");
 
-        case "nhc":
-        case "noaa":
-            response = noaaCommand();
-            break;
+    } else if (command === "nhc" || command === "noaa") {
+        response = noaaCommand();
 
-        case "count":
-            response = countCommand();
-            break;
+    } else if (command === "count") {
+        response = countCommand();
 
-        default:
-            response = "Command \"" + command + "\" not recognized";
+    } else {
+        response = "Command \"" + command + "\" not recognized";
     }
 
     // Send response

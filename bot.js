@@ -5,21 +5,19 @@ const encodeurl = require("encodeurl");
 
 // Initialize configuration data
 let config = {
-    "text_results": null,
-    "image_results": null,
-    "notify_connection": null,
-    "metered_wolfram": null,
-    "nhc_from_github": null,
-    "reactions": null,
-    "sarcasmText": null,
-    "debug": null
+    "text_results": 1,
+    "image_results": 1,
+    "notify_connection": false,
+    "nhc_from_github": false,
+    "reactions": false,
+    "sarcasmText": false
 };
 
 let messageCount = {
-    "henry": null,
-    "eliot": null,
-    "duncan": null,
-    "logan": null
+    "henry": 0,
+    "eliot": 0,
+    "duncan": 0,
+    "logan": 0
 };
 
 let reactionConfig = {};
@@ -331,18 +329,14 @@ function findLinkInHtml(source, startString, endString) {
     try {
         return [decodeURIComponent(linkString), nextSearchIdx];
     } catch(error) {
-        if (config.debug) {
-            let quoteText;
+        let quoteText;
 
-            if (linkString.length > 1000) {
-                quoteText = `linkString is too long to display. startString: ${startString}    endString: ${endString}`;
-            } else {
-                quoteText = linkString
-            }
-            return [`Cannot parse URI. LinkString: \`\`\`${quoteText}\`\`\``, 0];
+        if (linkString.length > 1000) {
+            quoteText = `linkString is too long to display. startString: ${startString}    endString: ${endString}`;
         } else {
-            return ["Cannot parse URI. Don't search for such silly nonsense.", 0];
+            quoteText = linkString
         }
+        return [`Cannot parse URI. LinkString: \`\`\`${quoteText}\`\`\``, 0];
     }
 }
 

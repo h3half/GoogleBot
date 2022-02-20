@@ -22,6 +22,7 @@ let messageCount = {
     "duncan": null,
     "logan": null
 };
+
 let reactionConfig = {};
 let wa_key = "";
 
@@ -84,6 +85,7 @@ bot.on("messageCreate", message => {
     let writeFile = false;
 
     // Count messages sent by human users
+    //TODO: Don't hardcode the names here; loop through the count config properly
     if (message.author.id === "136882320799039488" ) { // Henry
         messageCount.henry = parseInt(messageCount.henry) + 1;
         writeFile = true;
@@ -120,12 +122,12 @@ bot.on("messageCreate", message => {
             console.log("Handling command: " + content);
             commandParser(content, message);
 
-            // Handle image searching
+        // Handle image searching
         } else if (commandString.startsWith("image ") || commandString.startsWith("images ") || commandString.startsWith("picture ") || commandString.startsWith("pictures ")) {
             console.log("Image searching: " + content);
             imageSearch(content, message);
 
-            // Handle link searching
+        // Handle link searching
         } else {
             console.log("Link searching: " + content);
             linkSearch(content, message);
@@ -148,7 +150,7 @@ bot.on("messageCreate", message => {
                         if (listOfReactions.length === 1) {
                             message.react(reactionConfig[reactionId]["reaction"]);
 
-                            // If there are multiple emoji to send, loop through them
+                        // If there are multiple emoji to send, loop through them
                         } else {
                             for (let reaction in listOfReactions) {
                                 message.react(listOfReactions[reaction]);
@@ -404,7 +406,7 @@ function reactionCommand(args) {
     let returnMessage = "";
 
     if (args[0] === "-h" || args[0] === "help" || args[0] === "--help") {
-        // TODO: Make this better
+        //TODO: Make this better
         let helpText =  "```Manages GoogleBot reactions."
         helpText += "\n\nBasic usage:"
         helpText += "\nView existing reactions: @Google !reaction"
@@ -420,7 +422,7 @@ function reactionCommand(args) {
         helpText += "```"
         return helpText
 
-        // Create or updates reaction to a given term
+    // Create or updates reaction to a given term
     } else if (args[0] === "set") {
         // Make a new entry
         if (args[1] === "new") {
@@ -451,7 +453,7 @@ function reactionCommand(args) {
 
             returnMessage = `Created new reaction for term \`${term}\` with ID \`${newName}\``;
 
-            // Update existing entry
+        // Update existing entry
         } else {
             // Retrieve update information from args
             let entryToUpdate = args[1];
@@ -473,7 +475,7 @@ function reactionCommand(args) {
             returnMessage = `Updated id \`${entryToUpdate}.${valueToUpdate}\` to value \`${newValue}\``;
         }
 
-        // Remove an existing reaction
+    // Remove an existing reaction
     } else if (args[0] === "remove") {
         let id = args[1];
 
@@ -492,7 +494,7 @@ function reactionCommand(args) {
             return `Error: Could not find matching entry for ID \`${id}\`. Nothing was removed.`
         }
 
-        // Display the entirety of the config
+    // Display the entirety of the config
     } else {
         return "```" + JSON.stringify(reactionConfig, null, 4) + "```"
     }
@@ -527,6 +529,7 @@ function randomNumber(min, max) {
 }
 
 // Sends questions to Wolfram|Alpha
+//TODO: Just use the W|A API
 function wolframCommand(args) {
     let searchTerm = args.join(" ");
     let returnData = getHtml(`http://api.wolframalpha.com/v2/query?appid=${wa_key}&input=${searchTerm}`);

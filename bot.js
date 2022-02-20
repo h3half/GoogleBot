@@ -43,17 +43,10 @@ bot.on("ready", () => {
     const reconnectTime = new Date(Date.now());
     log(`Connected as ${bot.user.username} (id ${bot.user}) on ${reconnectTime.toUTCString()}`);
 
-    // Load config
-    let rawConfig = fs.readFileSync("./config/config.json");
-    config = JSON.parse(rawConfig.toString());
-
-    // Load message count file
-    let rawMessageCount = fs.readFileSync("./config/messageCount.json");
-    messageCount = JSON.parse(rawMessageCount.toString());
-
-    // Load reaction config file
-    let rawReaction = fs.readFileSync("./config/reactions.json");
-    reactionConfig = JSON.parse(rawReaction.toString());
+    // Load configuration and data files
+    config = JSON.parse(fs.readFileSync("./config/config.json").toString());
+    messageCount = JSON.parse(fs.readFileSync("./config/messageCount.json").toString());
+    reactionConfig = JSON.parse(fs.readFileSync("./config/reactions.json").toString());
 
     // Optionally notify server of connection
     if (config.notify_connection) {

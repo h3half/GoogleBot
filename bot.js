@@ -71,16 +71,13 @@ bot.on("messageCreate", message => {
     }
 
     // Count messages sent by users tracked in 'messageCount.json', as long as it's not a !count command
-    try {
-        if (content.split(" ")[1].substring(1) !== "count") {
-            for (let userId in messageCount["counts"]) {
-                if (message.author.id === userId) {
-                    updateMessageCount(userId);
-                    break;
-                }
-            }
+    // Messages containing a !count command are incremented elsewhere; otherwise race conditions can mess up the file
+    if (content.split(" ").length > 1 && content.split(" ")[1].substring(1) !== "count") {
+        // Only increment for users who are already tracked in the messageCount file
+        if (message.author.id in messageCount["counts"]) {
+            updateMessageCount(message.author.id);
         }
-    } catch { }
+    }
 
     // If the message starts with either the real bot mention string or the nickname bot mention string
     if (mention === bot.user) {

@@ -75,14 +75,7 @@ bot.on("messageCreate", message => {
         if (content.split(" ")[1].substring(1) !== "count") {
             for (let userId in messageCount["counts"]) {
                 if (message.author.id === userId) {
-                    messageCount["counts"][userId] = parseInt(messageCount["counts"][userId]) + 1;
-
-                    try {
-                        fs.writeFileSync('./config/messageCount.json', JSON.stringify(messageCount, null, 4));
-                    } catch (e) {
-                        log(`Writing message count file failed with error:\n${e}`);
-                    }
-
+                    updateMessageCount(userId);
                     break;
                 }
             }
@@ -154,6 +147,17 @@ bot.on("messageCreate", message => {
         }
     }
 });
+
+// Increment messageCount object and JSON file for given UserID
+function updateMessageCount(userId) {
+    messageCount["counts"][userId] = parseInt(messageCount["counts"][userId]) + 1;
+
+    try {
+        fs.writeFileSync('./config/messageCount.json', JSON.stringify(messageCount, null, 4));
+    } catch (e) {
+        log(`Writing message count file failed with error:\n${e}`);
+    }
+}
 
 // Save log entries to both the log and the console
 function log(messageToLog) {
@@ -533,13 +537,8 @@ function countCommand(args, message) {
         return `Message counts reloaded from file. New message counts:\n${newCounts}`;
     }
 
-    // Add the message requesting a count check and save to file
-    messageCount["counts"][message.author.id] = parseInt(messageCount["counts"][message.author.id]) + 1;
-    try {
-        fs.writeFileSync('./config/messageCount.json', JSON.stringify(messageCount, null, 4));
-    } catch (e) {
-        log(`Writing message count file failed with error:\n${e}`);
-    }
+    // Add the message requesting a count
+    updateMessageCount(message.author.id)
 
     let counts = messageCount["counts"];
 

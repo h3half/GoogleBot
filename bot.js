@@ -399,7 +399,7 @@ function reactionCommand(args) {
             // Check if the term is already used by an existing reaction
             for (let id in reactionConfig) {
                 if (term === reactionConfig[id]["term"]) {
-                    return `The term \`${term}\` is already in use by reaction ID \`${reactionConfig[id]["id"]}\``
+                    return `The term \`${term}\` is already in use by reaction ID \`${id}\``
                 }
             }
 
@@ -413,7 +413,6 @@ function reactionCommand(args) {
                 whitelist: null // user ID whitelist to activate this reaction on; if null then reaction is always active
             };
 
-            newReactionObj["id"] = newName;
             newReactionObj["term"] = term;
 
             // Create a new JSON object using current ECMAScript timestamp
@@ -431,6 +430,13 @@ function reactionCommand(args) {
             // Quick sanity check for the type
             if (valueToUpdate === "type" && newValue !== "emoji" && newValue !== "text") {
                 return `Error: \`type\` only accepts the following values: \`emoji\`, \`text\``
+            }
+
+            // Only allow specified fields to be updated
+            let allowedFields = ["term", "type", "reaction", "whitelist"];
+
+            if (!allowedFields.includes(valueToUpdate)) {
+                return `Error: \`${valueToUpdate}\` is not a modifiable field - allowed fields are: \`${allowedFields}\``
             }
 
             // Update object values
@@ -462,9 +468,32 @@ function reactionCommand(args) {
             return `Error: Could not find matching entry for ID \`${id}\`. Nothing was removed.`
         }
 
+    // Show detailed properties of a specific reaction file entry
+    } else if (args[0] === "show") {
+        if (args.length < 2) {
+            return "Command usage: !reaction show <ID to show>"
+        }
+
+        let displayId = args[1];
+
+        if (displayId in reactionConfig) {
+            return "```" + JSON.stringify((reactionConfig[displayId]), null, 4) + "```"
+        } else {
+            return `Could not find ID \`${displayId}\` in reactions config file.`
+        }
+
     // Display the entirety of the config
     } else {
-        return "```" + JSON.stringify(reactionConfig, null, 4) + "```"
+        // The config quickly becomes too long for Discord to accept, so the whole config can't be sent at once
+        let returnString = "Reaction IDs and terms to react to:\n```ID             Term\n";
+
+        for (let id in reactionConfig) {
+            returnString += `${id}: ${reactionConfig[id]["term"]}\n`;
+        }
+
+        returnString += "```\nUse \`!reaction show <ID>\` to see more details about a particular reaction"
+
+        return returnString
     }
 
     // Save the updated reaction config to file

@@ -482,7 +482,7 @@ function reactionCommand(args) {
             return `Could not find ID \`${displayId}\` in reactions config file.`
         }
 
-    // Display the entirety of the config
+    // Display reaction IDs and terms
     } else {
         // The config quickly becomes too long for Discord to accept, so the whole config can't be sent at once
         let returnString = "Reaction IDs and terms to react to:\n```ID             Term\n";
@@ -574,15 +574,30 @@ function countCommand(args, message) {
         totalMessages += parseInt(counts[count]);
     }
 
+    // Get average messages/day since server creation
     let serverOrigin = new Date('December 15, 2018 15:57:00');
     let currentDate = Date.now();
     let elapsedMilliseconds = currentDate - serverOrigin;
     let elapsedDays = Math.floor(elapsedMilliseconds / (1000 * 60 * 60 * 24));
     let messagesPerDay = (totalMessages / elapsedDays).toFixed(2);
 
+    // Order the message counts in descending order
+    let collatedDict = {};
+    for (let userID in messageCount["aliases"]) {
+        collatedDict[messageCount["aliases"][userID]] = parseInt(counts[userID]);
+    }
+
+    let items = Object.keys(collatedDict).map((key) => { return [key, collatedDict[key]] });
+    items.sort( (first, second) => { return first[1] - second[1] }).reverse();
+
     let readout = "Current message counts\n";
-    for (let count in counts) {
-        readout += `\n${messageCount["aliases"][count]}: ${parseInt(counts[count]).toLocaleString("en-us")}`
+    for (let i = 0; i < items.length; i++) {
+        readout += `\n${items[i][0]}: ${items[i][1].toLocaleString("en-us")}`;
+
+        if (i !== 0) {
+            let delta = items[i][1] - items[0][1]
+            readout += ` (${delta.toLocaleString("en-us")})`;
+        }
     }
 
     readout += `\n\nTotal: ${totalMessages.toLocaleString("en-us")}`

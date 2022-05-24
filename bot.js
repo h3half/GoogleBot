@@ -555,7 +555,7 @@ function sendMessage(string, message) {
 // Displays how many messages each user has sent
 function countCommand(args, message) {
     // Reload data from file if requested
-    if (args[0] === "reload") {
+    if (args[0] === "reload" || args[0] === "refresh" || args[0] === "update") {
         // Scan the counts from file and build the printout
         messageCount = JSON.parse(fs.readFileSync("./config/messageCount.json").toString());
         let newCounts = countCommand(" ", message);

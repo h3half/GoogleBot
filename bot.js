@@ -118,6 +118,8 @@ bot.on("messageCreate", message => {
                         if (listOfReactions.length === 1) {
                             message.react(reactionConfig[reactionId]["reaction"]);
 
+                            log("Reacted to message: " + content + "\nSent reaction: " + reactionConfig[reactionId]["reaction"]);
+
                         // If there are multiple emoji to send, loop through them
                         } else {
                             for (let reaction in listOfReactions) {
@@ -126,10 +128,14 @@ bot.on("messageCreate", message => {
                                 // Add a slight delay to ensure proper order and (hopefully) avoid being rate-limited
                                 new Promise(r => setTimeout(r, 500));
                             }
+
+                            log("Reacted to message: " + content + "\nSent reaction: " + listOfReactions);
                         }
 
                     } else if (reactionType === "text") {
                         sendMessage(reactionConfig[reactionId]["reaction"], message);
+
+                        log("Reacted to message: " + content + "\nSent reaction: " + reactionConfig[reactionId]["reaction"]);
                     }
                 }
             }

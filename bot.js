@@ -377,16 +377,19 @@ function configCommand(args) {
 
 // Handles the reaction command
 function reactionCommand(args) {
+    //TODO: An option to delete the message that spawned the reaction would be nice
+    //      For link reactions only, of course
     let returnMessage = "";
 
     if (args[0] === "-h" || args[0] === "help" || args[0] === "--help") {
-        //TODO: Re-implement old old method of handling help files
+        //TODO: Re-implement old old method of handling help files, this is silly
         let helpText =  "```Manages GoogleBot reactions."
         helpText += "\n\nBasic usage:"
         helpText += "\nView existing reactions: @Google !reaction"
         helpText += "\nAdd new reaction: @Google !reaction set new <term to react to>"
         helpText += "\nEdit existing reaction: @Google !reaction set <reaction ID> <property to change> <new value>"
         helpText += "\nRemove existing reaction: @Google !reaction remove <reaction ID>"
+        helpText += "\nShow properties of existing reaction: @Google !reaction show <reaction ID>"
         helpText += "\n\nProperties:"
         helpText += "\nid: The ID of the reaction."
         helpText += "\nterm: The search term to react to."
@@ -412,9 +415,8 @@ function reactionCommand(args) {
             let newName = Date.now();
 
             let newReactionObj = {
-                id: null, // tracker ID, and the name of the object
                 term: null, // search term to react to
-                type: null, // "emoji" or "link"
+                type: null, // "emoji" or "text"
                 reaction: null, // the emoji(s) or link to send
                 whitelist: null // user ID whitelist to activate this reaction on; if null then reaction is always active
             };

@@ -13,6 +13,7 @@ let config = {
     "reactions": false,
     "sarcasmText": false
 };
+
 let messageCount = {};
 let reactionConfig = {};
 let wa_key = "";
@@ -60,15 +61,13 @@ bot.on("ready", () => {
 
 // Fires when a message is created
 bot.on("messageCreate", message => {
-    let mention = message.mentions.users.first();
-
-    // Ignore grave symbols ( ` ) since it messes with discord formatting so much
-    let content = message.content.replace("’", "");
-
     // Early return if the message was sent by GoogleBot itself
     if (message.author === bot.user) {
         return
     }
+
+    // Ignore grave symbols ( ` ) since it messes with discord formatting so much
+    let content = message.content.replace("’", "");
 
     // Count messages sent by users tracked in 'messageCount.json', as long as it's not a !count command
     // Messages containing a !count command are incremented elsewhere; otherwise race conditions can mess up the file
@@ -79,27 +78,9 @@ bot.on("messageCreate", message => {
         }
     }
 
-    // If the message starts with either the real bot mention string or the nickname bot mention string
-    if (mention === bot.user) {
-        // Parse out the mentionString
-        let commandString = content.substring(content.search(" ") + 1);
-        log(`Received command: ${commandString}`);
-
-        // Handle commands
-        if (commandString.startsWith("!")) {
-            log("Handling command: " + content);
-            commandParser(content, message);
-
-        // Handle image searching
-        } else if (commandString.startsWith("image ") || commandString.startsWith("images ") || commandString.startsWith("picture ") || commandString.startsWith("pictures ")) {
-            log("Image searching: " + content);
-            imageSearch(content, message);
-
-        // Handle link searching
-        } else {
-            log("Link searching: " + content);
-            linkSearch(content, message);
-        }
+    if (content.startsWith("!")) {
+        log("Handling command: " + content);
+        commandParser(content, message);
     }
 
     // React to the message, per 'reactions.json'
@@ -174,17 +155,26 @@ function log(messageToLog) {
 }
 
 // Parse commands, call appropriate command-specific functions, and send the response
-function commandParser(content, message) {
+function commandParser(content, message) {    
     // Parse command
     let words = content.split(" ");
-    let command = words[1].substring(1);
+    let command = words[0].substring(1);
     let args = words.slice(2);
     let response;
 
     log("Found command '" + command + "' with args '" + args + "'");
 
     // Call command-specific functions
-    if (command === "config") {
+    if (command === "search") {
+        linkSearch(content, message);
+
+    } else if (command === "image") {
+        imageSearch(content, message, false);
+
+    } else if (command === "images") {
+        imageSearch(content, message, true);
+
+    } else if (command === "config") {
         response = configCommand(args);
 
     } else if (command === "reaction") {
@@ -210,21 +200,21 @@ function commandParser(content, message) {
     }
 
     // Send response
-    if (message !== "") {
+    if (message !== "" && typeof response !== "undefined") {
         sendMessage(response, message);
         log("Sent message: " + response);
     }
 }
 
 // Finds result of Google Image search for given query
-function imageSearch(content, message) {
+function imageSearch(content, message, multiples) {
     log("Performing image search for message: " + content);
 
     let searchTerm = content.substring(content.search(" ") + 1);
 
-    let imagesToSend = config.image_results;
-    if (searchTerm.startsWith("image ") || searchTerm.startsWith("picture ")) {
-        imagesToSend = 1;
+    let imagesToSend = 1;
+    if (multiples) {
+        imagesToSend = config.image_results;
     }
 
     // Remove the command

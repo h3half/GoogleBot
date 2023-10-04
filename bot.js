@@ -71,7 +71,7 @@ bot.on("messageCreate", message => {
 
     // Count messages sent by users tracked in 'messageCount.json', as long as it's not a !count command
     // Messages containing a !count command are incremented elsewhere; otherwise race conditions can mess up the file
-    if (content.split(" ").length > 1 && content.split(" ")[1].substring(1) !== "count") {
+    if (!content.startsWith("count")) {
         // Only increment for users who are already tracked in the messageCount file
         if (message.author.id in messageCount["counts"]) {
             updateMessageCount(message.author.id);
@@ -81,16 +81,23 @@ bot.on("messageCreate", message => {
     if (content.startsWith("!")) {
         log("Handling command: " + content);
         commandParser(content, message);
-    }
 
-    // React to the message, per 'reactions.json'
-    if (config.reactions) {
+    // We don't want to react to commands
+    } else if(config.reactions) {
+        // React to the message, per 'reactions.json'
         for (let reactionId in reactionConfig) {
             let searchTerm = reactionConfig[reactionId]["term"];
 
             // Check user whitelist, if applicable
             if (reactionConfig[reactionId]["whitelist"] == null || reactionConfig[reactionId]["whitelist"] === message.author.id) {
-                if (content.toLowerCase().search(searchTerm.toLowerCase()) !== -1) {
+                let reactionLocation = null;
+                if (reactionConfig[reactionId]["case_sensitive"] == "no") {
+                    reactionLocation = content.toLowerCase().search(searchTerm.toLowerCase());
+                } else {
+                    reactionLocation = content.search(searchTerm);
+                }
+
+                if (reactionLocation !== -1) {
                     let reactionType = reactionConfig[reactionId]["type"];
 
                     if (reactionType === "emoji") {
@@ -159,7 +166,7 @@ function commandParser(content, message) {
     // Parse command
     let words = content.split(" ");
     let command = words[0].substring(1);
-    let args = words.slice(2);
+    let args = words.slice(1);
     let response;
 
     log("Found command '" + command + "' with args '" + args + "'");
@@ -217,9 +224,6 @@ function imageSearch(content, message, multiples) {
         imagesToSend = config.image_results;
     }
 
-    // Remove the command
-    searchTerm = searchTerm.substring(searchTerm.search(" ") + 1);
-
     // Remove "of", if present
     if (searchTerm.startsWith("of ")) {
         searchTerm = searchTerm.substring(searchTerm.search(" ") + 1);
@@ -238,7 +242,7 @@ function imageSearch(content, message, multiples) {
 
     let response = "";
     for (let i = 0; i < imagesToSend; i++) {
-        let [thisResponse, responseIdx] = findLinkInHtml(rawHtml, "<img class=\"yWs4tf\"", "&amp;s"); //NOTE: Google likes to change the img class to mess with us
+        let [thisResponse, responseIdx] = findLinkInHtml(rawHtml, "<img class=\"DS1iW\"", "&amp;s"); //NOTE: Google likes to change the img class to mess with us
         rawHtml = rawHtml.substring(responseIdx);
         response += thisResponse + "\n";
     }
@@ -408,7 +412,8 @@ function reactionCommand(args) {
                 term: null, // search term to react to
                 type: null, // "emoji" or "text"
                 reaction: null, // the emoji(s) or link to send
-                whitelist: null // user ID whitelist to activate this reaction on; if null then reaction is always active
+                whitelist: null, // user ID whitelist to activate this reaction on; if null then reaction is always active
+                case_sensitive: "no" // whether the reaction is case-sensitive or not
             };
 
             newReactionObj["term"] = term;
@@ -431,7 +436,7 @@ function reactionCommand(args) {
             }
 
             // Only allow specified fields to be updated
-            let allowedFields = ["term", "type", "reaction", "whitelist"];
+            let allowedFields = ["term", "type", "reaction", "whitelist", "case_sensitive"];
 
             if (!allowedFields.includes(valueToUpdate)) {
                 return `Error: \`${valueToUpdate}\` is not a modifiable field - allowed fields are: \`${allowedFields}\``
@@ -608,6 +613,7 @@ function countCommand(args, message) {
 function noaaCommand() {
     // If the option is enabled, the link is always the same
     if (config.nhc_from_github) {
+        //TODO: Consider actually downloading this image and then attaching it to the response message
         log("Retrieving NOAA ATL image from nhc-cones github project");
         return "https://protuhj.github.io/nhc-cones/atl_latest.png"
     }
